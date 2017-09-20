@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.kraken", "bot.kraken\bot.kraken.csproj", "{89767E9E-9552-4FD9-892D-51141D2A3AB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.kraken.test", "bot.kraken.test\bot.kraken.test.csproj", "{41A435F8-28AE-40D4-9BFB-63256DAB8FA5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89767E9E-9552-4FD9-892D-51141D2A3AB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89767E9E-9552-4FD9-892D-51141D2A3AB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89767E9E-9552-4FD9-892D-51141D2A3AB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89767E9E-9552-4FD9-892D-51141D2A3AB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41A435F8-28AE-40D4-9BFB-63256DAB8FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41A435F8-28AE-40D4-9BFB-63256DAB8FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41A435F8-28AE-40D4-9BFB-63256DAB8FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41A435F8-28AE-40D4-9BFB-63256DAB8FA5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8AA32A69-B87A-4246-B1FE-0844B86D7695}
+	EndGlobalSection
+EndGlobal

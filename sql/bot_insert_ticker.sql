@@ -1,0 +1,43 @@
+INSERT INTO [dbo].[Ticker]
+           ([capturingDate]
+           ,[pair]
+           ,[ask_price]
+           ,[ask_whole_volume]
+           ,[ask_lot_volume]
+           ,[bid_price]
+           ,[bid_whole_volume]
+           ,[bid_lot_volume]
+           ,[last_trade_price]
+           ,[last_trade_volume]
+           ,[volume_today]
+           ,[volume_24_hours]
+           ,[number_of_trades_today]
+           ,[number_of_trades_24_hours]
+           ,[low_today]
+           ,[low_24_hours]
+           ,[high_today]
+           ,[high_24_hours]
+           ,[opening_price])
+     VALUES
+           (@capturingDate
+           ,@pair
+           ,@ask_price
+           ,@ask_whole_volume
+           ,@ask_lot_volume
+           ,@bid_price
+           ,@bid_whole_volume
+           ,@bid_lot_volume
+           ,@last_trade_price
+           ,@last_trade_volume
+           ,@volume_today
+           ,@volume_24_hours
+           ,@number_of_trades_today
+           ,@number_of_trades_24_hours
+           ,@low_today
+           ,@low_24_hours
+           ,@high_today
+           ,@high_24_hours
+           ,@opening_price)
+GO
+
+
