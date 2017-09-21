@@ -40,6 +40,14 @@ namespace bot.kraken.test
         }
 
         [Test]
+        public async void TestName()
+        {
+            var cr = new KrakenClient();
+            var result = await cr.GetTrades("ETHUSD");
+            Assert.That(result, Is.Not.Null);
+        }
+
+        [Test]
         public void BuildUrl()
         {
             var cr = new KrakenClient();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -10,7 +9,6 @@ namespace bot.kraken
 {
     public class KrakenClient
     {
-        private const string URL = "api.kraken.com";
         private const string VERSION = "0";
         private const string PUBLIC = "public";
 
@@ -35,6 +33,14 @@ namespace bot.kraken
             return await CallPublic<Dictionary<string, AssetPair>>("AssetPairs", paramPairs);
         }
 
+        public async Task<Dictionary<string, object>> GetTrades(params string[] pairs)
+        {
+            var paramPairs = new Dictionary<string, string>()
+                .AddParam("pair", pairs);
+
+            return await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
+        }
+
         private async Task<TResult> CallPublic<TResult>(string url, Dictionary<string, string> paramPairs = null)
         {
             var client = new HttpClient();
@@ -42,16 +48,10 @@ namespace bot.kraken
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             
             var response = await client.GetAsync(BuildPublicPath(url, paramPairs));
-            if (response.IsSuccessStatusCode)
-            {
-                var serverResponse= await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
-                return serverResponse.Result;
-            }
-            else
-            {
-                throw new Exception($"Request is unsuccessful.");
-            }
+            if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
 
+            var serverResponse= await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
+            return serverResponse.Result;
         }
 
         public string BuildPublicPath(string path, Dictionary<string, string> paramPairs=null)
