@@ -48,6 +48,8 @@ create table Trades(
 )
 
 
-create table trade_id(
-	trade_id nvarchar(55)
+create table lastid(
+	altname nvarchar(15),
+	time DATETIME constraint df_lastid_time default(getdate()),
+	id nvarchar(15)
 )

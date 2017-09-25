@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
+using Newtonsoft.Json.Linq;
 
 namespace bot.kraken
 {
@@ -33,12 +35,38 @@ namespace bot.kraken
             return await CallPublic<Dictionary<string, AssetPair>>("AssetPairs", paramPairs);
         }
 
-        public async Task<Dictionary<string, object>> GetTrades(params string[] pairs)
+        public async Task<SinceResponse<Trade>> GetTrades(string lastId=null, params string[] pairs)
         {
             var paramPairs = new Dictionary<string, string>()
+                .AddParam("since", lastId)
                 .AddParam("pair", pairs);
 
-            return await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
+            var response = await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
+
+            var result = new SinceResponse<Trade>();
+            result.Results = new List<Trade>();
+            
+            result.LastId = response.Last().Value.ToString();
+
+           
+            foreach (var tradesPair in response.Take(response.Count - 1))
+            {
+                foreach (var arr in tradesPair.Value as JArray)
+                {
+                    var trade = new Trade();
+                    trade.PairName = tradesPair.Key;
+                    trade.Price = (decimal)arr[0];
+                    trade.Volume = (decimal)arr[1];
+                    trade.DateTime = UnixTimeStampToDateTime((double)arr[2]);
+                    trade.TransactionType = arr[3].ToString() == "b" ? TransactionType.Buy : TransactionType.Sell;
+                    trade.PriceType = arr[4].ToString() == "m" ? PriceType.Market : PriceType.Limit;
+                    trade.Misc = arr[5].ToString();
+                    result.Results.Add(trade);
+                }
+
+            }
+
+            return  result;
         }
 
         private async Task<TResult> CallPublic<TResult>(string url, Dictionary<string, string> paramPairs = null)
@@ -52,6 +80,14 @@ namespace bot.kraken
 
             var serverResponse= await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
             return serverResponse.Result;
+        }
+
+        public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            var dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
         }
 
         public string BuildPublicPath(string path, Dictionary<string, string> paramPairs=null)
