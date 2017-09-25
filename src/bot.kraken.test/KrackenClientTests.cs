@@ -51,10 +51,23 @@ namespace bot.kraken.test
         public void BuildUrl()
         {
             var cr = new KrakenClient();
-            var url = cr.BuildPublicPath("Asset", new Dictionary<string, string>() {{"asset", "ETH"}});
+            var url = cr.BuildPath("Asset", true, new Dictionary<string, string>() {{"asset", "ETH"}});
+            
+            Assert.That(url.ToString(), Is.EqualTo("https://api.kraken.com/0/public/Asset?asset=ETH"));
 
-            Assert.That(url, Is.EqualTo("https://api.kraken.com/0/public/Asset?asset=ETH"));
 
+        }
+
+        [Test]
+        public async Task GetBalance()
+        {
+            var testCredentials = new KrakenCredentials
+            {
+                Secret = "oyk16w/LzydxZ4aAnuy2DK5qzByYG9ja1XaW6BQ9uP1hongaczewuGUeAaWE5rHL5vvIrBEF2j13E97hvuPVmA==",
+                Key = "eR55LkazbSk6AG27P/RgwvORohb2fgZpB2sKVpZOzJlWyRB27ttqgt1d"
+            };
+            var cr = new KrakenClient(testCredentials);
+            await cr.CallPrivate<int>("Balance");
         }
     }
 }
