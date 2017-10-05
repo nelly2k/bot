@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace bot.kraken
 {
-    public class DatabaseService
+    public class KrakenDatabaseService
     {
 
         private string connectionString = "Server=(local);Database=bot;Trusted_Connection=True;";
@@ -38,15 +39,15 @@ namespace bot.kraken
                         command.Parameters.AddWithValue("@price", trade.Price);
                         command.Parameters.AddWithValue("@volume", trade.Volume);
                         command.Parameters.AddWithValue("@tradeTime", trade.DateTime);
-                        command.Parameters.AddWithValue("@buy_sell", trade.TransactionType== TransactionType.Buy?"b":"s");
-                        command.Parameters.AddWithValue("@market_limit", trade.PriceType== PriceType.Limit?"l":"m");
+                        command.Parameters.AddWithValue("@buy_sell", trade.TransactionType == TransactionType.Buy ? "b" : "s");
+                        command.Parameters.AddWithValue("@market_limit", trade.PriceType == PriceType.Limit ? "l" : "m");
                         command.Parameters.AddWithValue("@misc", trade.Misc);
                         await command.ExecuteNonQueryAsync();
                     }
                 }
-               con.Close();
+                con.Close();
             }
-            
+
         }
 
 
@@ -62,13 +63,13 @@ namespace bot.kraken
                 {
                     command.Parameters.AddWithValue("@altname", altname);
 
-                    var result =  await command.ExecuteScalarAsync();
+                    var result = await command.ExecuteScalarAsync();
                     con.Close();
                     return result?.ToString();
                 }
-              
+
             }
-    }
+        }
 
         public async Task SaveLastId(string altname, string lastId)
         {
@@ -82,18 +83,20 @@ namespace bot.kraken
            ,@id)
 ";
                 con.Open();
-               
-                    using (var command = new SqlCommand(commandText, con))
-                    {
-                        command.Parameters.AddWithValue("@altname", altname);
-                        command.Parameters.AddWithValue("@id", lastId);
-                      
-                        await command.ExecuteNonQueryAsync();
-                    }
-               
+
+                using (var command = new SqlCommand(commandText, con))
+                {
+                    command.Parameters.AddWithValue("@altname", altname);
+                    command.Parameters.AddWithValue("@id", lastId);
+
+                    await command.ExecuteNonQueryAsync();
+                }
+
                 con.Close();
             }
 
         }
+
+
     }
 }

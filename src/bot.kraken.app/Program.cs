@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using bot.core;
+using bot.model;
 
 namespace bot.kraken.app
 {
@@ -14,23 +13,44 @@ namespace bot.kraken.app
             var pair = "ETHUSD";
             var client = new KrakenClient();
 
-            var db = new DatabaseService();
+            var db = new KrakenDatabaseService();
+            var coreDb = new DatabaseService();
+            Config config=null;
+            
             while (true)
             {
-
-                Task.Run(async () =>
+                if (!ConnectivityService.CheckForInternetConnection())
                 {
-                    var id = await db.GetId(pair);
+                    Console.WriteLine($"{DateTime.Now:F} Connection is not available");
+                    Thread.Sleep(10 * 60 * 1000);
+                    continue;
+                }
 
-                    var getTradesReasult = await client.GetTrades(id, pair);
-                    Console.WriteLine($"Loaded {getTradesReasult.Results.Count} trades at {DateTime.Now}. Last id: {getTradesReasult.LastId}");
+                try
+                {
+                    var mainTask = Task.Run(async () =>
+                    {
+                        config = await coreDb.GetConfig();
 
-                    await db.SaveLastId(pair, getTradesReasult.LastId);
-                    await db.Save(getTradesReasult.Results);
+                        var id = await db.GetId(pair);
 
-                });
-                Thread.Sleep(10 * 60 * 1000);
+                        var getTradesReasult = await client.GetTrades(id, pair);
+                        await db.SaveLastId(pair, getTradesReasult.LastId);
+                        await db.Save(getTradesReasult.Results);
 
+                        Console.WriteLine($"{DateTime.Now:F} Loaded {getTradesReasult.Results.Count} trades");
+
+                    });
+                    Task.WaitAll(new[] { mainTask },  new TimeSpan(2* 60 * 1000));
+                    Thread.Sleep((config?.LoadIntervalMinutes??5) * 60 * 1000);
+                }
+                catch (Exception e)
+                {
+                    Task.WaitAll(Task.Run(async () =>
+                    {
+                        await coreDb.Log("kraken", "loadingError", e.Message);
+                    }));
+                }
             }
         }
     }

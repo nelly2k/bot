@@ -4,15 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{01BC02A5-0B46-4F3A-805C-9ACE2475D516}</ProjectGuid>
+    <ProjectGuid>{432A07C1-F082-4C90-96FC-A1B857683E50}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>bot.kraken.app</RootNamespace>
-    <AssemblyName>bot.kraken.app</AssemblyName>
+    <RootNamespace>bot.core.trading</RootNamespace>
+    <AssemblyName>bot.core.trading</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>H:\dev\projects\bot\publish\</PublishUrl>
+    <PublishUrl>H:\dev\projects\bot\publish\trading\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -22,7 +22,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>8</ApplicationRevision>
+    <ApplicationRevision>19</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -48,10 +48,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>7954D20336C61851415F6C18BBF1FE966BA02866</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>82C42E5FD14FA26CB30DAE33675A28DA5E1092C2</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>bot.kraken.app_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>bot.core.trading_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>true</GenerateManifests>
@@ -75,16 +75,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="bot.kraken.app_TemporaryKey.pfx" />
+    <None Include="bot.core.trading_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\bot.core\bot.core.csproj">
       <Project>{c3d60570-db25-4fe2-b90b-65fda05dbaaa}</Project>
       <Name>bot.core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\bot.kraken\bot.kraken.csproj">
-      <Project>{56fc4aea-c021-42ab-9796-44156c78c206}</Project>
-      <Name>bot.kraken</Name>
     </ProjectReference>
     <ProjectReference Include="..\bot.model\bot.model.csproj">
       <Project>{B26AFD5B-88C6-4FF5-8601-1EFE8B869479}</Project>

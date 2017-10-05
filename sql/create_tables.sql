@@ -1,25 +1,3 @@
-CREATE TABLE Ticker(
-	id int not null identity constraint pk_ticker primary key,
-	capturingDate datetime not null,
-	pair nvarchar(15) not null,
-	ask_price decimal,
-	ask_whole_volume decimal,
-	ask_lot_volume decimal,
-	bid_price decimal,
-	bid_whole_volume decimal,
-	bid_lot_volume decimal,
-	last_trade_price decimal,
-	last_trade_volume decimal,
-	volume_today decimal,
-	volume_24_hours decimal,
-	number_of_trades_today decimal,
-	number_of_trades_24_hours decimal,
-	low_today decimal,
-	low_24_hours decimal,
-	high_today decimal,
-	high_24_hours decimal,
-	opening_price decimal
-)
 
 create table Pairs(
 	id int not null identity constraint pk_pairs primary key,
@@ -52,4 +30,27 @@ create table lastid(
 	altname nvarchar(15),
 	time DATETIME constraint df_lastid_time default(getdate()),
 	id nvarchar(15)
+)
+
+create table config(
+	platform nvarchar(50),
+	name nvarchar(50),
+	value nvarchar(100)
+)
+
+insert into config values ('kraken', 'load_interval_minutes',5)
+insert into config values ('kraken', 'analyse_load_hours', 6)
+insert into config values ('kraken', 'analyse_group_period_minutes',5)
+insert into config values ('kraken', 'analyse_treshold_minutes',30)
+insert into config values ('kraken', 'analyse_macd_slow',26)
+insert into config values ('kraken', 'analyse_macd_fast',12)
+insert into config values ('kraken', 'analyse_macd_signal',9)
+insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
+
+
+create table log(
+	platform nvarchar(50),
+	datetime datetime not null constraint df_log default (getdate()),
+	status nvarchar(15) not null,
+	event nvarchar(max)
 )

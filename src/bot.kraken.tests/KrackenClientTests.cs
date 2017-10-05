@@ -72,14 +72,14 @@ namespace bot.kraken.test
                 Misc = "TEST transaction",
                 DateTime = new DateTime(2015,5,15)
             };
-            var d= new DatabaseService();
+            var d= new KrakenDatabaseService();
             await d.Save(new List<Trade>(){trade});
         }
 
         [Test]
         public async Task SaveLastId()
         {
-            var d = new DatabaseService();
+            var d = new KrakenDatabaseService();
             await d.SaveLastId("TEST", "3216549848454564545");
             Assert.That(await d.GetId("TEST"), Is.EqualTo("3216549848454564545"));
             }
@@ -87,7 +87,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetLastId()
         {
-            var d = new DatabaseService();
+            var d = new KrakenDatabaseService();
             var result = await d.GetId("TEST");
             Assert.That(result, Is.EqualTo("321"));
         }
@@ -95,7 +95,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetLastId_Not_exists()
         {
-            var d = new DatabaseService();
+            var d = new KrakenDatabaseService();
             var result = await d.GetId("EXT");
             Assert.That(result, Is.Null);
         }
