@@ -9,7 +9,7 @@ namespace bot.core
 {
     public class DatabaseService
     {
-        private string connectionString = "Server=(local);Database=bot;Trusted_Connection=True;";
+        private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
 
         public async Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null)
         {
@@ -91,6 +91,21 @@ namespace bot.core
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
         };
 
+        public async Task UpdateLastEvent(string eventName)
+        {
+            using (var con = new SqlConnection(connectionString))
+            {
+                var text = @"update lastEvent set datetime=getdate() where name=@name";
+                con.Open();
+                using (var com = new SqlCommand(text, con))
+                {
+                    com.Parameters.AddWithValue("@name", eventName);
+                    await com.ExecuteNonQueryAsync();
+                    con.Close();
+                }
+            }
+        }
+
         public async Task<Config> GetConfig()
         {
             using (var con = new SqlConnection(connectionString))
@@ -115,5 +130,8 @@ namespace bot.core
                 }
             }
         }
+
+        
     }
+    
 }

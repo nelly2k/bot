@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.tests", "bot.core.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.trading", "bot.core.trading\bot.core.trading.csproj", "{432A07C1-F082-4C90-96FC-A1B857683E50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.loader", "bot.service.loader\bot.service.loader.csproj", "{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{432A07C1-F082-4C90-96FC-A1B857683E50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{432A07C1-F082-4C90-96FC-A1B857683E50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{432A07C1-F082-4C90-96FC-A1B857683E50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -38,15 +38,17 @@ create table config(
 	value nvarchar(100)
 )
 
-insert into config values ('kraken', 'load_interval_minutes',5)
-insert into config values ('kraken', 'analyse_load_hours', 6)
-insert into config values ('kraken', 'analyse_group_period_minutes',5)
-insert into config values ('kraken', 'analyse_treshold_minutes',30)
-insert into config values ('kraken', 'analyse_macd_slow',26)
-insert into config values ('kraken', 'analyse_macd_fast',12)
-insert into config values ('kraken', 'analyse_macd_signal',9)
-insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
 
+insert into config values ('kraken', 'load_interval_minutes',3)
+insert into config values ('kraken', 'analyse_load_hours', 12)
+insert into config values ('kraken', 'analyse_group_period_minutes',3)
+insert into config values ('kraken', 'analyse_treshold_minutes',10)
+insert into config values ('kraken', 'analyse_macd_slow',20)
+insert into config values ('kraken', 'analyse_macd_fast',10)
+insert into config values ('kraken', 'analyse_macd_signal',5)
+insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
+insert into config values ('kraken', 'analyse_rsi_low',35)
+insert into config values ('kraken', 'analyse_rsi_high',70)
 
 create table log(
 	platform nvarchar(50),
@@ -54,3 +56,4 @@ create table log(
 	status nvarchar(15) not null,
 	event nvarchar(max)
 )
+

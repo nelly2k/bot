@@ -8,7 +8,7 @@ namespace bot.kraken
     public class KrakenDatabaseService
     {
 
-        private string connectionString = "Server=(local);Database=bot;Trusted_Connection=True;";
+        private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
 
         public async Task Save(List<Trade> trades)
         {
