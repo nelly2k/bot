@@ -2,7 +2,7 @@
 
 namespace bot.kraken.Model
 {
-    public class ClosedOrder
+    public class OrderInfo
     {
         public string Id { get; set; }
         public OrderStatus Status { get; set; }

@@ -98,7 +98,7 @@ namespace bot.kraken
             {
                 {"pair","ETHUSD"},
                 {"type",orderType.ToString()},
-                {"ordertype ","market"},
+                {"ordertype","market"},
                 {"volume",volume.ToString(CultureInfo.InvariantCulture) }
             });
             foreach (var o in response)
@@ -109,42 +109,61 @@ namespace bot.kraken
             
         }
 
-        public async Task<List<ClosedOrder>> GetClosedOrders()
+        public async Task<List<OrderInfo>> GetClosedOrders()
         {
             var paramPairs = new Dictionary<string, string>();
             var response = await CallPrivate<Dictionary<string, object>>("ClosedOrders", paramPairs);
 
-            var result = new List<ClosedOrder>();
+            var result = new List<OrderInfo>();
 
             foreach (var closed in response.Take(response.Count - 1))
             {
                 var orders = JsonConvert.DeserializeObject<Dictionary<string, object>>(closed.Value.ToString());
-                foreach (var order in orders)
-                {
-                    var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(order.Value.ToString());
-                    var desc = JsonConvert.DeserializeObject<Dictionary<string, object>>(details["descr"].ToString());
-
-                    var item = new ClosedOrder();
-                    item.Id = order.Key;
-                    item.Status = Convert.ToString(details["status"]).ToEnum<OrderStatus>();
-                    item.Reason = Convert.ToString(details["reason"]);
-                    item.Pair = Convert.ToString(desc["pair"]);
-                    item.OrderType = Convert.ToString(desc["type"]).ToEnum<OrderType>();
-                    item.OrderPriceType = Convert.ToString(desc["ordertype"]).ToEnum<OrderPriceType>();
-                    item.PrimaryPrice = Convert.ToDecimal(desc["price"]);
-                    item.SecondaryPrice = Convert.ToDecimal(desc["price2"]);
-                    item.Leverage = Convert.ToString(desc["leverage"]);
-                    item.Volume = Convert.ToDecimal(details["vol"]);
-                    item.VolumeExec = Convert.ToDecimal(details["vol_exec"]);
-                    item.Cost = Convert.ToDecimal(details["cost"]);
-                    item.Fee = Convert.ToDecimal(details["fee"]);
-                    item.Price = Convert.ToDecimal(details["price"]);
-                    item.Misc = Convert.ToString(details["misc"]);
-                    result.Add(item);
-                }
+                result.AddRange(ToOrders(orders));
             }
             return result;
         }
+
+        public List<OrderInfo> ToOrders(Dictionary<string, object> orders)
+        {
+            var result = new List<OrderInfo>();
+
+            foreach (var order in orders)
+            {
+                var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(order.Value.ToString());
+                var desc = JsonConvert.DeserializeObject<Dictionary<string, object>>(details["descr"].ToString());
+
+                var item = new OrderInfo();
+                item.Id = order.Key;
+                item.Status = Convert.ToString(details["status"]).ToEnum<OrderStatus>();
+                item.Reason = Convert.ToString(details["reason"]);
+                item.Pair = Convert.ToString(desc["pair"]);
+                item.OrderType = Convert.ToString(desc["type"]).ToEnum<OrderType>();
+                item.OrderPriceType = Convert.ToString(desc["ordertype"]).ToEnum<OrderPriceType>();
+                item.PrimaryPrice = Convert.ToDecimal(desc["price"]);
+                item.SecondaryPrice = Convert.ToDecimal(desc["price2"]);
+                item.Leverage = Convert.ToString(desc["leverage"]);
+                item.Volume = Convert.ToDecimal(details["vol"]);
+                item.VolumeExec = Convert.ToDecimal(details["vol_exec"]);
+                item.Cost = Convert.ToDecimal(details["cost"]);
+                item.Fee = Convert.ToDecimal(details["fee"]);
+                item.Price = Convert.ToDecimal(details["price"]);
+                item.Misc = Convert.ToString(details["misc"]);
+                result.Add(item);
+            }
+            return result;
+        }
+        
+        public async Task<List<OrderInfo>> GetOrdersInfo(params string[] orderIds)
+        {
+            var paramPairs = new Dictionary<string, string>()
+            {
+                {"txid", string.Join(",", orderIds) }
+            };
+            var response = await CallPrivate<Dictionary<string, object>>("QueryOrders", paramPairs);
+            return ToOrders(response);
+        }
+
 
         public async Task<Dictionary<string, decimal>> GetBalance()
         {

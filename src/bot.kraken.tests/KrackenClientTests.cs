@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting;
 using System.Threading.Tasks;
 using bot.core;
 using bot.kraken.Model;
 using bot.model;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace bot.kraken.test
@@ -135,7 +138,7 @@ namespace bot.kraken.test
         {
             //var cr = new KrakenClient(await GetConfig());
             var tradebalance = await (await Client()).CallPrivate<string>("TradeBalance", new Dictionary<string, string>() { { "asset", "ETH" } });
-            Assert.That(tradebalance,Is.Not.Null);
+            Assert.That(tradebalance, Is.Not.Null);
         }
 
 
@@ -152,9 +155,36 @@ namespace bot.kraken.test
         }
 
         [Test]
-        public async  Task Buy()
+        [Ignore("It is actually buying")]
+        public async Task Buy()
         {
-            await(await Client()).AddOrder(OrderType.buy, 0.04m);
+            await (await Client()).AddOrder(OrderType.buy, 0.04m);
+        }
+
+        [Test]
+        public async Task Sell()
+        {
+            await (await Client()).AddOrder(OrderType.sell, 0.04m);
+        }
+
+
+
+
+        [Test]
+        public void Desearialize_AddOrder()
+        {
+            var response = JsonConvert.DeserializeObject<Dictionary<string, object>>("{\"descr\":{\"order\":\"buy 0.04000000 ETHUSD @ market\"},\"txid\":[\"ODZDYQ-FEQJZ-EHJRYP\"]}");
+            var ids = response["txid"];
+            var id2 = JsonConvert.DeserializeObject<List<string>>(ids.ToString());
+            Assert.That(id2, Is.Not.Null);
+        }
+
+        [Test]
+        public async  Task GetOrder()
+        {
+            var result = await (await Client()).GetOrdersInfo("ODZDYQ-FEQJZ-EHJRYP");
+
+            Assert.That(result, Is.Not.Null);
         }
     }
 }

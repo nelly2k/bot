@@ -53,7 +53,7 @@
     <Compile Include="KrakenClient.cs" />
     <Compile Include="Model\Asset.cs" />
     <Compile Include="Model\AssetPair.cs" />
-    <Compile Include="Model\ClosedOrder.cs" />
+    <Compile Include="Model\ORderInfo.cs" />
     <Compile Include="Model\OrderStatus.cs" />
     <Compile Include="Model\KrakenResponse.cs" />
     <Compile Include="Model\OrderPriceType.cs" />

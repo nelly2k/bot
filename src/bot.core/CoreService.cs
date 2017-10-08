@@ -24,14 +24,16 @@ namespace bot.core
                 var rsiLastPeak = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods).GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                     .FirstOrDefault();
                 var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, DateTime.Now, macd, rsiLastPeak);
-                var price = grouped.First(x => x.DateTime == macd.Trade.DateTime);
-                Console.WriteLine($"{DateTime.Now:F} Price: {price.Price:C} Status: {newStatus.ToString()}");
+
+                Console.WriteLine($"{DateTime.Now:F} Price: {grouped.Last().Price:C} Status: {newStatus.ToString()}");
                 if (newStatus != TradeStatus && newStatus != TradeStatus.Unknown)
                 {
+                    var price = grouped.First(x => x.DateTime == macd.Trade.DateTime);
                     TradeStatus = newStatus;
-                    
+                    System.Media.SystemSounds.Asterisk.Play();
                     await databaseService.Log("kraken", TradeStatus.ToString(),
                         $"New status: {newStatus} price: {price.Price:C}");
+                    
                 }
             }
             catch (Exception e)
@@ -39,10 +41,5 @@ namespace bot.core
                 Console.WriteLine(e);
             }
         }
-
-        //public async Task InitiateBuy()
-        //{
-            
-        //}
     }
 }

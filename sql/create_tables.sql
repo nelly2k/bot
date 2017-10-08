@@ -61,12 +61,16 @@ create table log(
 
 create table lastEvent(
 	name nvarchar(150) not null,
-	datetime datetime
+	datetime datetime,
+	value nvarchar
 )
 go
 insert into lastEvent
-values ('kraken load', null)
+values ('kraken load', null,null)
 
 insert into lastEvent
-values ('kraken analysis', null)
+values ('kraken analysis', null,null)
+
+insert into lastEvent
+values ('kraken stop-loss', null,null)
 
