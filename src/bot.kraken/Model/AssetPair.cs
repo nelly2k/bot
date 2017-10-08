@@ -1,4 +1,4 @@
-﻿namespace bot.kraken
+﻿namespace bot.kraken.Model
 {
     /// <summary>
     /// Note: If an asset pair is on a maker/taker fee schedule, the taker side is given 

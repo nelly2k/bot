@@ -24,34 +24,14 @@ namespace bot.core
                 var rsiLastPeak = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods).GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                     .FirstOrDefault();
                 var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, DateTime.Now, macd, rsiLastPeak);
-
+                var price = grouped.First(x => x.DateTime == macd.Trade.DateTime);
+                Console.WriteLine($"{DateTime.Now:F} Price: {price.Price:C} Status: {newStatus.ToString()}");
                 if (newStatus != TradeStatus && newStatus != TradeStatus.Unknown)
                 {
                     TradeStatus = newStatus;
-                    var price = grouped.First(x => x.DateTime == macd.Trade.DateTime);
-
+                    
                     await databaseService.Log("kraken", TradeStatus.ToString(),
                         $"New status: {newStatus} price: {price.Price:C}");
-
-                    if (macd.CrossType == null)
-                    {
-                        await databaseService.Log("kraken", TradeStatus.ToString(), "RSI: No crosses registered");
-                    }
-                    else
-                    {
-                        await databaseService.Log("kraken", TradeStatus.ToString(),
-                            $"MACD {macd.CrossType.ToString()} at {macd.Trade.DateTime:t} - {(DateTime.Now - macd.Trade.DateTime).TotalMinutes} minutes ago");
-                    }
-
-                    if (rsiLastPeak == null)
-                    {
-                        await databaseService.Log("kraken", TradeStatus.ToString(), "RSI: No peaks registered");
-                    }
-                    else
-                    {
-                        await databaseService.Log("kraken", TradeStatus.ToString(),
-                            $"RSI last peak was {rsiLastPeak.PeakType} exit was at {rsiLastPeak.ExitTrade.DateTime:t} - {(DateTime.Now - rsiLastPeak.ExitTrade.DateTime).TotalMinutes} minutes ago");
-                    }
                 }
             }
             catch (Exception e)
@@ -59,5 +39,10 @@ namespace bot.core
                 Console.WriteLine(e);
             }
         }
+
+        //public async Task InitiateBuy()
+        //{
+            
+        //}
     }
 }

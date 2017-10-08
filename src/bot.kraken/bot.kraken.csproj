@@ -47,17 +47,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Asset.cs" />
-    <Compile Include="AssetPair.cs" />
     <Compile Include="CredentialsInvalidException.cs" />
     <Compile Include="KrakenDatabaseService.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="KrakenClient.cs" />
-    <Compile Include="KrakenCredentials.cs" />
-    <Compile Include="KrakenResponse.cs" />
+    <Compile Include="Model\Asset.cs" />
+    <Compile Include="Model\AssetPair.cs" />
+    <Compile Include="Model\ClosedOrder.cs" />
+    <Compile Include="Model\OrderStatus.cs" />
+    <Compile Include="Model\KrakenResponse.cs" />
+    <Compile Include="Model\OrderPriceType.cs" />
+    <Compile Include="Model\OrderType.cs" />
+    <Compile Include="Model\PriceType.cs" />
+    <Compile Include="Model\ServerTime.cs" />
+    <Compile Include="Model\SinceResponse.cs" />
+    <Compile Include="Model\SubmitOrder.cs" />
+    <Compile Include="Model\Trade.cs" />
+    <Compile Include="Model\TransactionType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServerTime.cs" />
-    <Compile Include="Trade.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

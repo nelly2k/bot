@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace bot.kraken
 {
@@ -20,6 +21,11 @@ namespace bot.kraken
                 dic.Add(field, string.Join(",", par));
             }
             return dic;
+        }
+
+        public static  TEnum ToEnum<TEnum>(this string str)
+        {
+            return (TEnum)Enum.Parse(typeof(TEnum), str);
         }
     }
 }

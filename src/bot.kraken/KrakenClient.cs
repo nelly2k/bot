@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -7,33 +8,36 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using bot.kraken.Model;
+using bot.model;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace bot.kraken
 {
     public class KrakenClient
     {
-        private readonly IKrakenCredentials _credentials;
+        private readonly IApiCredentials _credentials;
         private const string VERSION = "0";
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
 
         public KrakenClient()
         {
-            
+
         }
 
-        public KrakenClient(IKrakenCredentials credentials)
+        public KrakenClient(IApiCredentials credentials)
         {
             _credentials = credentials;
         }
 
         public async Task<ServerTime> GetServerTime()
         {
-            return  await CallPublic<ServerTime>("Time");
+            return await CallPublic<ServerTime>("Time");
         }
 
-        public async Task<Dictionary<string, Asset>> GetAssetInfo(string assetClass= "currency", params string[] assets)
+        public async Task<Dictionary<string, Asset>> GetAssetInfo(string assetClass = "currency", params string[] assets)
         {
             var pairs = new Dictionary<string, string>()
                 .AddParam("aclass", assetClass)
@@ -45,11 +49,11 @@ namespace bot.kraken
         {
             var paramPairs = new Dictionary<string, string>()
                 .AddParam("pair", pairs);
-            
+
             return await CallPublic<Dictionary<string, AssetPair>>("AssetPairs", paramPairs);
         }
 
-        public async Task<SinceResponse<Trade>> GetTrades(string lastId=null, params string[] pairs)
+        public async Task<SinceResponse<Trade>> GetTrades(string lastId = null, params string[] pairs)
         {
             var paramPairs = new Dictionary<string, string>()
                 .AddParam("since", lastId)
@@ -57,71 +61,134 @@ namespace bot.kraken
 
             var response = await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
 
-            var result = new SinceResponse<Trade>();
-            result.Results = new List<Trade>();
-            
-            result.LastId = response.Last().Value.ToString();
+            var result = new SinceResponse<Trade> {Results = new List<Trade>()};
+            if (response==null || !response.Any()) return result;
 
-           
+            result.LastId = Convert.ToString(response.Last().Value);
+            if (response.Count <= 1) return result;
+
             foreach (var tradesPair in response.Take(response.Count - 1))
             {
-                foreach (var arr in tradesPair.Value as JArray)
+                var trades = tradesPair.Value as JArray;
+                if (trades == null)
                 {
-                    var trade = new Trade();
-                    trade.PairName = tradesPair.Key;
-                    trade.Price = (decimal)arr[0];
-                    trade.Volume = (decimal)arr[1];
-                    trade.DateTime = UnixTimeStampToDateTime((double)arr[2]);
-                    trade.TransactionType = arr[3].ToString() == "b" ? TransactionType.Buy : TransactionType.Sell;
-                    trade.PriceType = arr[4].ToString() == "m" ? PriceType.Market : PriceType.Limit;
-                    trade.Misc = arr[5].ToString();
-                    result.Results.Add(trade);
+                    continue;
                 }
-
+                foreach (var arr in trades)
+                {
+                    result.Results.Add(new Trade
+                    {
+                        PairName = tradesPair.Key,
+                        Price = (decimal)arr[0],
+                        Volume = (decimal)arr[1],
+                        DateTime = UnixTimeStampToDateTime((double)arr[2]),
+                        TransactionType = arr[3].ToString() == "b" ? TransactionType.Buy : TransactionType.Sell,
+                        PriceType = arr[4].ToString() == "m" ? PriceType.Market : PriceType.Limit,
+                        Misc = arr[5].ToString()
+                    });
+                }
             }
 
-            return  result;
+            return result;
+        }
+
+        public async Task AddOrder(OrderType orderType, decimal volume)
+        {
+            var response = await CallPrivate<Dictionary<string, object>>("AddOrder", new Dictionary<string, string>
+            {
+                {"pair","ETHUSD"},
+                {"type",orderType.ToString()},
+                {"ordertype ","market"},
+                {"volume",volume.ToString(CultureInfo.InvariantCulture) }
+            });
+            foreach (var o in response)
+            {
+                Console.WriteLine(o.Key);
+                Console.WriteLine(o.Value);
+            }
+            
+        }
+
+        public async Task<List<ClosedOrder>> GetClosedOrders()
+        {
+            var paramPairs = new Dictionary<string, string>();
+            var response = await CallPrivate<Dictionary<string, object>>("ClosedOrders", paramPairs);
+
+            var result = new List<ClosedOrder>();
+
+            foreach (var closed in response.Take(response.Count - 1))
+            {
+                var orders = JsonConvert.DeserializeObject<Dictionary<string, object>>(closed.Value.ToString());
+                foreach (var order in orders)
+                {
+                    var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(order.Value.ToString());
+                    var desc = JsonConvert.DeserializeObject<Dictionary<string, object>>(details["descr"].ToString());
+
+                    var item = new ClosedOrder();
+                    item.Id = order.Key;
+                    item.Status = Convert.ToString(details["status"]).ToEnum<OrderStatus>();
+                    item.Reason = Convert.ToString(details["reason"]);
+                    item.Pair = Convert.ToString(desc["pair"]);
+                    item.OrderType = Convert.ToString(desc["type"]).ToEnum<OrderType>();
+                    item.OrderPriceType = Convert.ToString(desc["ordertype"]).ToEnum<OrderPriceType>();
+                    item.PrimaryPrice = Convert.ToDecimal(desc["price"]);
+                    item.SecondaryPrice = Convert.ToDecimal(desc["price2"]);
+                    item.Leverage = Convert.ToString(desc["leverage"]);
+                    item.Volume = Convert.ToDecimal(details["vol"]);
+                    item.VolumeExec = Convert.ToDecimal(details["vol_exec"]);
+                    item.Cost = Convert.ToDecimal(details["cost"]);
+                    item.Fee = Convert.ToDecimal(details["fee"]);
+                    item.Price = Convert.ToDecimal(details["price"]);
+                    item.Misc = Convert.ToString(details["misc"]);
+                    result.Add(item);
+                }
+            }
+            return result;
+        }
+
+        public async Task<Dictionary<string, decimal>> GetBalance()
+        {
+            return await CallPrivate<Dictionary<string, decimal>>("Balance");
         }
 
         private async Task<TResult> CallPublic<TResult>(string url, Dictionary<string, string> paramPairs = null)
         {
             var client = new HttpClient();
-            
+
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            var response = await client.GetAsync(BuildPath(url, true,paramPairs).ToString());
-            if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
-
-            var serverResponse= await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
-            return serverResponse.Result;
-        }
-
-        //Task<TResult>
-        public async Task<TResult> CallPrivate<TResult>(string url, Dictionary<string, string> paramPairs = null)
-        {
-            if (_credentials==null)
-            {
-                throw  new CredentialsInvalidException();
-            }
-            var client = new HttpClient();
-            Int64 nonce = DateTime.Now.Ticks;
-            var props = $"nonce={nonce}";
-     
-             var uri = BuildPath(url, false, paramPairs);
-         
-            var content = new StringContent(props, Encoding.UTF8, "application/x-www-form-urlencoded");
-
-            client.DefaultRequestHeaders.Add("API-Key", _credentials.Key);
-            client.DefaultRequestHeaders.Add("API-Sign", Signature(nonce,props, uri));
-
-            var response = await client.PostAsync(uri, content);
+            var response = await client.GetAsync(BuildPath(url, true, paramPairs).ToString());
             if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
 
             var serverResponse = await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
             return serverResponse.Result;
         }
 
-        private string Signature(Int64 nonce,string props, Uri uri)
+        public async Task<TResult> CallPrivate<TResult>(string url, Dictionary<string, string> paramPairs = null)
+        {
+            if (_credentials == null)
+            {
+                throw new CredentialsInvalidException();
+            }
+            var client = new HttpClient();
+            Int64 nonce = DateTime.Now.Ticks;
+
+            var uri = BuildPath(url, false);
+            var props = $"nonce={nonce}{Porps(paramPairs)}";
+
+            var content = new StringContent(props, Encoding.UTF8, "application/x-www-form-urlencoded");
+
+            client.DefaultRequestHeaders.Add("API-Key", _credentials.Key);
+            client.DefaultRequestHeaders.Add("API-Sign", Signature(nonce, props, uri));
+
+            var response = await client.PostAsync(uri, content);
+            if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
+            var str = await response.Content.ReadAsStringAsync();
+            var serverResponse = await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
+            return serverResponse.Result;
+        }
+
+        private string Signature(Int64 nonce, string props, Uri uri)
         {
             var base64DecodedSecred =
                 Convert.FromBase64String(
@@ -171,7 +238,7 @@ namespace bot.kraken
             return dtDateTime;
         }
 
-        public Uri BuildPublicPath(string path, Dictionary<string, string> paramPairs=null)
+        public Uri BuildPublicPath(string path, Dictionary<string, string> paramPairs = null)
         {
             var builder = new UriBuilder
             {
@@ -181,14 +248,19 @@ namespace bot.kraken
             return builder.Uri;
         }
 
-        public Uri BuildPath(string path, bool isPublic = true, Dictionary<string, string> paramPairs=null)
+        private string Porps(Dictionary<string, string> param)
+        {
+            return param != null ? $"&{string.Join("&", param.Select(x => $"{x.Key}={x.Value}"))}" : string.Empty;
+        }
+
+        public Uri BuildPath(string path, bool isPublic = true, Dictionary<string, string> paramPairs = null)
         {
 
             var builder = new UriBuilder
             {
                 Host = "api.kraken.com",
                 Scheme = Uri.UriSchemeHttps,
-                Path = $"/{VERSION}/{(isPublic?PUBLIC:PRIVATE)}/{path}"
+                Path = $"/{VERSION}/{(isPublic ? PUBLIC : PRIVATE)}/{path}"
             };
 
             if (paramPairs != null)

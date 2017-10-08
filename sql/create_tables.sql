@@ -49,6 +49,8 @@ insert into config values ('kraken', 'analyse_macd_signal',5)
 insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
 insert into config values ('kraken', 'analyse_rsi_low',35)
 insert into config values ('kraken', 'analyse_rsi_high',70)
+insert into config values ('kraken', 'api_key','')
+insert into config values ('kraken', 'api_secret','')
 
 create table log(
 	platform nvarchar(50),
@@ -56,4 +58,15 @@ create table log(
 	status nvarchar(15) not null,
 	event nvarchar(max)
 )
+
+create table lastEvent(
+	name nvarchar(150) not null,
+	datetime datetime
+)
+go
+insert into lastEvent
+values ('kraken load', null)
+
+insert into lastEvent
+values ('kraken analysis', null)
 

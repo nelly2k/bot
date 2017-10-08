@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using bot.kraken.Model;
 
 namespace bot.kraken
 {

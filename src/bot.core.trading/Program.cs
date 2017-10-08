@@ -2,43 +2,70 @@
 using System.Threading;
 using System.Threading.Tasks;
 using bot.model;
+using Timer = System.Timers.Timer;
 
 namespace bot.core.trading
 {
     class Program
     {
+        private static CoreService _coreService;
+        private static DatabaseService _db;
+        private static Timer _timer;
+
         static void Main(string[] args)
         {
-            Console.WriteLine("Start trading");
-            var service = new CoreService();
-            var db = new DatabaseService();
-            Config config = null;
-            while (true)
+            _coreService = new CoreService();
+            _db = new DatabaseService();
+
+            _timer = new Timer(10 * 1000);
+            _timer.Elapsed += Timer_Elapsed;
+            _timer.Start();
+            Console.ReadLine();
+        }
+
+        static void Timer_Elapsed(object sender, EventArgs e)
+        {
+            _timer.Stop();
+            Task.Run(RunAsync).ContinueWith(r =>
             {
-                if (!ConnectivityService.CheckForInternetConnection())
-                {
-                    Console.WriteLine($"{DateTime.Now:F} Connection is not available");
-                    Thread.Sleep(10 * 60 * 1000);
-                    continue;
-                }
                 
-                try
+                if (r.IsFaulted && r.Exception != null)
                 {
-                    var mainTask = Task.Run(async () =>
+                    Console.WriteLine("An exception here");
+                    Exception ex = r.Exception;
+
+                    while (ex is AggregateException && r.Exception.InnerException != null)
                     {
-                        Console.WriteLine($"{DateTime.Now:F} Start Analysis");
-                        config = await db.GetConfig();
-                        await service.SetStatus(config);
-                    });
-                    Task.WaitAll(new [] {mainTask}, new TimeSpan(2* 60 * 1000));
-                    Console.WriteLine($"{DateTime.Now:F} Status: { CoreService.TradeStatus.ToString()}");
-                   
-                    Thread.Sleep((config?.LoadIntervalMinutes??5) * 60 * 1000);
+                        ex = ex.InnerException;
+                    }
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+            }).Wait(new TimeSpan(1 * 60 * 1000));
+            
+            _timer.Start();
+        }
+
+        static async Task RunAsync()
+        {
+            if (!ConnectivityService.CheckForInternetConnection())
+            {
+                Console.WriteLine($"{DateTime.Now:F} Connection is not available");
+                _timer.Interval = 10 * 60 * 1000;
+                return;
+            }
+
+            try
+            {
+                var config = await _db.GetConfig();
+                await _coreService.SetStatus(config);
+                _timer.Interval = (config?.LoadIntervalMinutes ?? 3) * 60 * 1000;
+
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
     }

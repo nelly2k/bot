@@ -47,12 +47,21 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\bot.core\bot.core.csproj">
+      <Project>{C3D60570-DB25-4FE2-B90B-65FDA05DBAAA}</Project>
+      <Name>bot.core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\bot.kraken\bot.kraken.csproj">
       <Project>{56fc4aea-c021-42ab-9796-44156c78c206}</Project>
       <Name>bot.kraken</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\bot.model\bot.model.csproj">
+      <Project>{B26AFD5B-88C6-4FF5-8601-1EFE8B869479}</Project>
+      <Name>bot.model</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace bot.kraken
+﻿namespace bot.kraken.Model
 {
     public class Asset
     {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ namespace bot.service.loader
 
                 var db = new KrakenDatabaseService();
                 var coreDb = new DatabaseService();
-             
+
                 if (!ConnectivityService.CheckForInternetConnection())
                 {
                     _interval = 10;
@@ -56,7 +57,10 @@ namespace bot.service.loader
                 var id = await db.GetId(pair);
 
                 var getTradesReasult = await client.GetTrades(id, pair);
-                await db.SaveLastId(pair, getTradesReasult.LastId);
+                if (!string.IsNullOrEmpty(getTradesReasult.LastId))
+                {
+                    await db.SaveLastId(pair, getTradesReasult.LastId);
+                }
                 await db.Save(getTradesReasult.Results);
                 await coreDb.UpdateLastEvent("kraken load");
 
@@ -70,13 +74,34 @@ namespace bot.service.loader
         {
             try
             {
-                RunAsync(_cancellationTokenSource.Token).Wait(new TimeSpan(60 * 1000));
+                RunAsync(_cancellationTokenSource.Token).ContinueWith(r =>
+                {
+                    if (r.IsFaulted && r.Exception != null)
+                    {
+                        Exception ex = r.Exception;
+                        while (ex is AggregateException && r.Exception.InnerException != null)
+                        {
+                            ex = ex.InnerException;
+                        }
+                        Write(ex.Message);
+                        Write(ex.StackTrace);
+                    }
+                }).Wait(new TimeSpan(60 * 1000));
             }
             finally
             {
                 _runCompleteEvent.Set();
             }
 
+        }
+
+        public void Write(string message)
+        {
+            using (var file = new System.IO.StreamWriter($"h:\\loader_log.txt", true))
+            {
+                file.WriteLine(message);
+                file.Close();
+            }
         }
     }
 }

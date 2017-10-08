@@ -1,16 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using bot.model;
 
-namespace bot.kraken
+namespace bot.kraken.Model
 {
-
-    public class SinceResponse<TResult>
-    {
-        public List<TResult> Results { get; set; }
-        public string LastId { get; set; }
-        
-    }
     public class Trade:ITradePrice
     {
         public string PairName { get; set; }
@@ -23,17 +15,5 @@ namespace bot.kraken
         
 
         public string Misc { get; set; }
-    }
-
-    public enum TransactionType
-    {
-        Buy,
-        Sell
-    }
-
-    public enum PriceType
-    {
-        Market,
-        Limit
     }
 }

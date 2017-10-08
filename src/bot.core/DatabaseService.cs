@@ -89,6 +89,8 @@ namespace bot.core
             {"analyse_rsi_ema_periods", (c, v) => c.AnalyseRsiEmaPeriods = Convert.ToInt32(v)},
             {"analyse_rsi_low", (c, v) => c.AnalyseRsiLow = Convert.ToInt32(v)},
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
+            {"api_key", (c, v) => c.Key = v.ToString()},
+            {"api_secret", (c, v) => c.Secret = v.ToString()},
         };
 
         public async Task UpdateLastEvent(string eventName)

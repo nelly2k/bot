@@ -90,9 +90,11 @@ namespace bot.core.tests
         [Test]
         public async Task RunOneTrail()
         {
-            var startFall = new DateTime(2017, 9, 30, 23, 0, 0);
-            var end = new DateTime(2017, 10, 05, 8, 00, 0);
-            var config = new Config();
+            var startFall = new DateTime(2017, 10, 07, 00, 0, 0);
+            var end = new DateTime(2017, 10, 08, 8, 00, 0);
+            var db = new DatabaseService();
+            var config = await db.GetConfig();
+
             var result = await RunConfigTrail(config, 65m, startFall, end);
 
         }
@@ -207,8 +209,9 @@ namespace bot.core.tests
                         if (newStatus == TradeStatus.Buy)
                         {
                             price = Math.Round(trade.PriceBuyAvg == decimal.Zero ? trade.Price : trade.PriceBuyAvg, 2);
-                            currentEth = Math.Round(currentUsd / price, 5);
-                            currentUsd = 0;
+                            var sum = Math.Round(currentUsd / price, 3);
+                            currentEth = sum;
+                            
                             result.BuyNum += 1;
                         }
                         else if (currentEth != decimal.Zero)
