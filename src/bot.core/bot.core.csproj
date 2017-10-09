@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BalanceService.cs" />
     <Compile Include="ConnectivityService.cs" />
     <Compile Include="CoreService.cs" />
     <Compile Include="DatabaseService.cs" />

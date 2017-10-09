@@ -180,8 +180,9 @@ namespace bot.core.tests
         {
             var db = new DatabaseService();
             var result = new ConfigurationTrailResult();
+            var core = new CoreService();
             var currentTime = start;
-
+          
             var currentUsd = usd;
             var currentEth = decimal.Zero;
             var price = decimal.Zero;
@@ -209,16 +210,18 @@ namespace bot.core.tests
                         if (newStatus == TradeStatus.Buy)
                         {
                             price = Math.Round(trade.PriceBuyAvg == decimal.Zero ? trade.Price : trade.PriceBuyAvg, 2);
-                            var sum = Math.Round(currentUsd / price, 3);
-                            currentEth = sum;
-                            
+                            var fee = core.Transform(usd, price, 0.26m);
+                           // currentEth = fee.TargetCurrencyAmount;
+                            currentUsd = fee.BaseCurrencyRest;
                             result.BuyNum += 1;
                         }
                         else if (currentEth != decimal.Zero)
                         {
                             price = trade.PriceSellAvg == decimal.Zero ? trade.Price : trade.PriceSellAvg;
-                            currentUsd = Math.Round(currentEth * price, 2);
-                            currentEth = 0;
+                            
+                            var fee = core.Transform(currentEth, price, 0.16m, FeeSource.Target);
+                            currentUsd = fee.TargetCurrencyAmount;
+                           // currentEth = fee.BaseCurrencyRest;
                             result.SellNum += 1;
                         }
                     }
@@ -235,6 +238,9 @@ namespace bot.core.tests
             result.Price = currentEth * price + currentUsd;
             return result;
         }
+
+    
+
 
         private class ConfigurationTrailResult
         {

@@ -33,7 +33,7 @@ namespace bot.core
                     System.Media.SystemSounds.Asterisk.Play();
                     await databaseService.Log("kraken", TradeStatus.ToString(),
                         $"New status: {newStatus} price: {price.Price:C}");
-                    
+
                 }
             }
             catch (Exception e)
@@ -41,5 +41,41 @@ namespace bot.core
                 Console.WriteLine(e);
             }
         }
+
+
+        public CurrencyAmountResult Transform(decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent , FeeSource feeSource = FeeSource.Base)
+        {
+            var result = new CurrencyAmountResult();
+            switch (feeSource)
+            {
+                case FeeSource.Base:
+                    result.Fee = Math.Round(baseCurrencyAmount * feePercent / 100, 2);
+                    result.TargetCurrencyAmount = Math.Floor((baseCurrencyAmount - result.Fee) / currencyPrice * 100) / 100m;
+                    result.BaseCurrencyRest = baseCurrencyAmount - (result.TargetCurrencyAmount * currencyPrice + result.Fee);
+                    break;
+                case FeeSource.Target:
+                    var baseUsd = currencyPrice * baseCurrencyAmount;
+                    result.Fee = Math.Round(baseUsd * feePercent / 100, 2);
+                    result.BaseCurrencyRest = decimal.Zero;
+                    result.TargetCurrencyAmount = baseUsd - result.Fee;
+                    break;
+            }
+
+            return result;
+        }
+
+
+    }
+    public class CurrencyAmountResult
+    {
+        public decimal Fee { get; set; }
+        public decimal TargetCurrencyAmount { get; set; }
+        public decimal BaseCurrencyRest { get; set; }
+    }
+
+    public enum FeeSource
+    {
+        Base,
+        Target
     }
 }

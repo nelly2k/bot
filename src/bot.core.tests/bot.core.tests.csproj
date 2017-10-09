@@ -101,9 +101,11 @@
   <ItemGroup>
     <Compile Include="Integration.cs" />
     <Compile Include="WhenAnalysingMacd.cs" />
+    <Compile Include="WhenCalcCurrencyAmount.cs" />
     <Compile Include="WhenCalcMovingAverages.cs" />
     <Compile Include="WhenGrouping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WhenManagingBalance.cs" />
     <Compile Include="WhenSearchForPeaks.cs" />
   </ItemGroup>
   <ItemGroup>

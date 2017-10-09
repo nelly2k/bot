@@ -29,9 +29,7 @@ namespace bot.core.Extensions
                 })
                 .ToList();
         }
-
         
-
         private static DateTime GroupBy(ITradePrice x, int groupNum, GroupBy by)
         {
             var stamp = x.DateTime;

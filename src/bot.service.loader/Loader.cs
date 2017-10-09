@@ -83,6 +83,7 @@ namespace bot.service.loader
                         {
                             ex = ex.InnerException;
                         }
+                        Write($"{DateTime.Now:F}");
                         Write(ex.Message);
                         Write(ex.StackTrace);
                     }
