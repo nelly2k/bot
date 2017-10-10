@@ -3,15 +3,23 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using bot.kraken.Model;
+using bot.model;
 
 namespace bot.kraken
 {
-    public class KrakenDatabaseService
+    public interface IKrakenDataService:IService
+    {
+        Task Save(List<KrakenTrade> trades);
+        Task<string> GetId(string altname);
+        Task SaveLastId(string altname, string lastId);
+    }
+
+    public class KrakenDataService : IKrakenDataService
     {
 
         private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
 
-        public async Task Save(List<Trade> trades)
+        public async Task Save(List<KrakenTrade> trades)
         {
             using (var con = new SqlConnection(connectionString))
             {

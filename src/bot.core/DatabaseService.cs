@@ -7,7 +7,16 @@ using bot.model;
 
 namespace bot.core
 {
-    public class DatabaseService
+    public interface IDatabaseService:IService
+    {
+        Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
+        Task Log(string platform, string status, string what);
+        Task UpdateLastEvent(string eventName, string value);
+        Task<string> GetLastEventValue(string eventName);
+        Task<Config> GetConfig();
+    }
+
+    public class DatabaseService : IDatabaseService
     {
         private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
 
@@ -93,17 +102,44 @@ namespace bot.core
             {"api_secret", (c, v) => c.Secret = v.ToString()},
         };
 
-        public async Task UpdateLastEvent(string eventName)
+        public async Task UpdateLastEvent(string eventName, string value)
         {
             using (var con = new SqlConnection(connectionString))
             {
-                var text = @"update lastEvent set datetime=getdate() where name=@name";
+                var text = @"
+                if exists (select * from lastEvent where name = @name)
+                begin
+                   update lastEvent set datetime=getdate(), value=@value where name=@name
+                end
+                else
+                begin
+                 insert into lastEvent VALUES(@name, getdate(), @value)
+                end";
                 con.Open();
                 using (var com = new SqlCommand(text, con))
                 {
                     com.Parameters.AddWithValue("@name", eventName);
+                    com.Parameters.AddWithValue("@value", value);
                     await com.ExecuteNonQueryAsync();
                     con.Close();
+                }
+            }
+        }
+
+        public async Task<string> GetLastEventValue(string eventName)
+        {
+            using (var con = new SqlConnection(connectionString))
+            {
+                var text = @"select value from lastEvent where name=@eventName";
+                con.Open();
+                using (var com = new SqlCommand(text, con))
+                {
+                    com.Parameters.AddWithValue("@name", eventName);
+
+                    var result=  await com.ExecuteScalarAsync();
+
+                    con.Close();
+                    return result?.ToString();
                 }
             }
         }

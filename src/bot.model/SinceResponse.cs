@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace bot.kraken.Model
+namespace bot.model
 {
     public class SinceResponse<TResult>
     {

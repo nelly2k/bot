@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using bot.core;
+using bot.core.Extensions;
 using bot.kraken;
+using bot.model;
+using Microsoft.Practices.Unity;
 using Timer = System.Timers.Timer;
 
 namespace bot.service.loader
@@ -16,10 +20,26 @@ namespace bot.service.loader
         private int _interval = DefaultInterval;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly ManualResetEvent _runCompleteEvent = new ManualResetEvent(false);
+        private UnityContainer _container;
+        private IExchangeClient _client;
 
         public Loader()
         {
             InitializeComponent();
+            ConfigContainer();
+
+            _client = _container.Resolve<IExchangeClient>();
+        }
+
+        private void ConfigContainer()
+        {
+            _container = new UnityContainer();
+            _container.RegisterAssembleyWith<IKrakenDataService>();
+            _container.RegisterAssembleyWith<IFileService>();
+            _container.RegisterInstance<Config>(new Config());
+
+            _container.RegisterType<IExchangeClient, KrakenClientService>();
+
         }
 
         protected override void OnStart(string[] args)
@@ -42,9 +62,8 @@ namespace bot.service.loader
             while (!cancellationToken.IsCancellationRequested)
             {
                 const string pair = "ETHUSD";
-                var client = new KrakenClient();
-
-                var db = new KrakenDatabaseService();
+             
+                var db = new KrakenDataService();
                 var coreDb = new DatabaseService();
 
                 if (!ConnectivityService.CheckForInternetConnection())
@@ -56,15 +75,16 @@ namespace bot.service.loader
 
                 var id = await db.GetId(pair);
 
-                var getTradesReasult = await client.GetTrades(id, pair);
+                var getTradesReasult = await _client.GetTrades(id, pair);
                 if (!string.IsNullOrEmpty(getTradesReasult.LastId))
                 {
                     await db.SaveLastId(pair, getTradesReasult.LastId);
                 }
                 await db.Save(getTradesReasult.Results);
                 await coreDb.UpdateLastEvent("kraken load");
+                var config = await coreDb.GetConfig();
+                _container.RegisterInstance<Config>(config);
 
-                var config = await coreDb.GetConfig(); ;
                 _timer.Interval = (config?.LoadIntervalMinutes ?? DefaultInterval) * 60 * 1000;
             }
             _timer.Start();
@@ -83,9 +103,10 @@ namespace bot.service.loader
                         {
                             ex = ex.InnerException;
                         }
-                        Write($"{DateTime.Now:F}");
-                        Write(ex.Message);
-                        Write(ex.StackTrace);
+                        //TODO write
+                        //Write($"{DateTime.Now:F}");
+                        //Write(ex.Message);
+                        //Write(ex.StackTrace);
                     }
                 }).Wait(new TimeSpan(60 * 1000));
             }
@@ -96,13 +117,6 @@ namespace bot.service.loader
 
         }
 
-        public void Write(string message)
-        {
-            using (var file = new System.IO.StreamWriter($"h:\\loader_log.txt", true))
-            {
-                file.WriteLine(message);
-                file.Close();
-            }
-        }
+
     }
 }

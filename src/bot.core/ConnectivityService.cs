@@ -1,10 +1,17 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
+using bot.model;
 
 namespace bot.core
 {
-    public class ConnectivityService
+    public interface IConnectivityService:IService
     {
-        public static bool CheckForInternetConnection()
+        void CheckForInternetConnection();
+    }
+
+    public class ConnectivityService : IConnectivityService
+    {
+        public void CheckForInternetConnection()
         {
             try
             {
@@ -12,14 +19,19 @@ namespace bot.core
                 {
                     using (client.OpenRead("http://clients3.google.com/generate_204"))
                     {
-                        return true;
+                        
                     }
                 }
             }
             catch
             {
-                return false;
+                throw new ConnectionNoAvailableException();
             }
         }
+    }
+
+    public class ConnectionNoAvailableException : Exception
+    {
+        
     }
 }

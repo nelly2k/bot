@@ -12,7 +12,7 @@ namespace bot.core.tests
         [Test]
         public void Sma()
         {
-            var data = Builder<Trade>.CreateListOfSize(7)
+            var data = Builder<KrakenTrade>.CreateListOfSize(7)
                 .TheFirst(1).With(x => x.Price = 11)
                 .TheNext(1).With(x => x.Price = 12)
                 .TheNext(1).With(x => x.Price = 13)
@@ -31,7 +31,7 @@ namespace bot.core.tests
         [Test]
         public void Ema()
         {
-            var data = new[] {22.27, 22.19, 22.08,22.17,22.18,22.13,22.23,22.43,22.43,22.24,22.29,22.15,22.39,22.38,22.61}.Select(x=>new Trade()
+            var data = new[] {22.27, 22.19, 22.08,22.17,22.18,22.13,22.23,22.43,22.43,22.24,22.29,22.15,22.39,22.38,22.61}.Select(x=>new KrakenTrade()
             {
                 Price = (decimal)x
             }).AsEnumerable();
@@ -51,7 +51,7 @@ namespace bot.core.tests
             {
                 44.34,44.09,44.15,43.61,44.33,44.83,45.10,45.42,45.82,46.08,45.89,46.03,45.61,46.28,46.28,46,46.03,46.41
                 ,46.22,45.64,46.21,46.25,45.71,46.45,45.78,45.35,44.03,44.18,44.22,44.57,43.42,42.66                
-            }.Select(x => new Trade()
+            }.Select(x => new KrakenTrade()
             {
                 Price = (decimal)x
             }).AsEnumerable();
@@ -63,7 +63,7 @@ namespace bot.core.tests
         public void Change()
         {
 
-            var data = new[] { 44.34, 44.09}.Select(x => new Trade
+            var data = new[] { 44.34, 44.09}.Select(x => new KrakenTrade
             {
                 Price = (decimal)x
             }).AsEnumerable();

@@ -15,19 +15,30 @@ using Newtonsoft.Json.Linq;
 
 namespace bot.kraken
 {
-    public class KrakenClient
+    public interface IKrakenClientService:IService, IExchangeClient
+    {
+        Task<ServerTime> GetServerTime();
+        Task<Dictionary<string, Asset>> GetAssetInfo(string assetClass = "currency", params string[] assets);
+        Task<Dictionary<string, AssetPair>> GetTradableAssetPairs(params string[] pairs);
+        Task AddOrder(OrderType orderType, decimal volume);
+        Task<List<OrderInfo>> GetClosedOrders();
+        List<OrderInfo> ToOrders(Dictionary<string, object> orders);
+        Task<List<OrderInfo>> GetOrdersInfo(params string[] orderIds);
+        Task<Dictionary<string, decimal>> GetBalance();
+        Task<TResult> CallPrivate<TResult>(string url, Dictionary<string, string> paramPairs = null);
+        Uri BuildPublicPath(string path, Dictionary<string, string> paramPairs = null);
+        Uri BuildPath(string path, bool isPublic = true, Dictionary<string, string> paramPairs = null);
+    }
+
+    public class KrakenClientService : IKrakenClientService
     {
         private readonly IApiCredentials _credentials;
+
         private const string VERSION = "0";
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
 
-        public KrakenClient()
-        {
-
-        }
-
-        public KrakenClient(IApiCredentials credentials)
+        public KrakenClientService(IApiCredentials credentials)
         {
             _credentials = credentials;
         }
@@ -53,7 +64,8 @@ namespace bot.kraken
             return await CallPublic<Dictionary<string, AssetPair>>("AssetPairs", paramPairs);
         }
 
-        public async Task<SinceResponse<Trade>> GetTrades(string lastId = null, params string[] pairs)
+      
+        public async Task<SinceResponse<ITrade>> GetTrades(string lastId = null, params string[] pairs)
         {
             var paramPairs = new Dictionary<string, string>()
                 .AddParam("since", lastId)
@@ -61,7 +73,7 @@ namespace bot.kraken
 
             var response = await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
 
-            var result = new SinceResponse<Trade> {Results = new List<Trade>()};
+            var result = new SinceResponse<ITrade> {Results = new List<ITrade>()};
             if (response==null || !response.Any()) return result;
 
             result.LastId = Convert.ToString(response.Last().Value);
@@ -76,7 +88,7 @@ namespace bot.kraken
                 }
                 foreach (var arr in trades)
                 {
-                    result.Results.Add(new Trade
+                    result.Results.Add(new KrakenTrade
                     {
                         PairName = tradesPair.Key,
                         Price = (decimal)arr[0],
@@ -294,6 +306,8 @@ namespace bot.kraken
 
             return builder.Uri;
         }
+
+       
     }
 }
 

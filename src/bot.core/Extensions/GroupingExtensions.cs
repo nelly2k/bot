@@ -7,14 +7,14 @@ namespace bot.core.Extensions
 {
     public static class GroupingExtensions
     {
-        public static IEnumerable<ITradePrice> GroupPrice(this IEnumerable<ITradePrice> raw, int groupNum, GroupBy by, Operation operation)
+        public static IEnumerable<ITrade> GroupPrice(this IEnumerable<ITrade> raw, int groupNum, GroupBy by, Operation operation)
         {
             return raw.GroupBy(x => GroupBy(x, groupNum, by))
                 .Select(g => new BaseTrade { DateTime = g.Key, Price = CalcPrice(g, operation), Volume = g.Sum(x => x.Volume) })
                 .ToList();
         }
 
-        public static IEnumerable<GroupResult> GroupAll(this IEnumerable<ITradePrice> raw, int groupNum, GroupBy by)
+        public static IEnumerable<GroupResult> GroupAll(this IEnumerable<ITrade> raw, int groupNum, GroupBy by)
         {
             return raw.GroupBy(x => GroupBy(x, groupNum, by))
                 .Select(g => new GroupResult
@@ -30,7 +30,7 @@ namespace bot.core.Extensions
                 .ToList();
         }
         
-        private static DateTime GroupBy(ITradePrice x, int groupNum, GroupBy by)
+        private static DateTime GroupBy(ITrade x, int groupNum, GroupBy by)
         {
             var stamp = x.DateTime;
             switch (by)
@@ -53,7 +53,7 @@ namespace bot.core.Extensions
         }
 
 
-        private static decimal CalcPrice(IEnumerable<ITradePrice> g, Operation operation)
+        private static decimal CalcPrice(IEnumerable<ITrade> g, Operation operation)
         {
             switch (operation)
             {
@@ -72,7 +72,7 @@ namespace bot.core.Extensions
         }
     }
 
-    public class GroupResult : ITradePrice
+    public class GroupResult : ITrade
     {
         public DateTime DateTime { get; set; }
         public decimal Volume { get; set; }

@@ -87,9 +87,12 @@ namespace bot.core.tests
         {
             _bs.Buy(287, 0.4m);
             _bs.Buy(300, 0.5m);
-            _bs.Sell(0.5m);
 
-            Assert.That(_bs.GetVolumeToSell(), Is.EqualTo(0.4m).Within(0.001));
+            _bs.MarkNotSold(286);
+            
+            //var getLoss = 
+
+            //Assert.That(_bs.GetVolumeToSell(), Is.EqualTo(0.4m).Within(0.001));
         }
     }
 }

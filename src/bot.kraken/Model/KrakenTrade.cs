@@ -3,7 +3,7 @@ using bot.model;
 
 namespace bot.kraken.Model
 {
-    public class Trade:ITradePrice
+    public class KrakenTrade:ITrade
     {
         public string PairName { get; set; }
         public decimal Price { get; set; }
