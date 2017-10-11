@@ -15,12 +15,15 @@ namespace bot.core
         private readonly IDatabaseService _databaseService;
         private readonly IExchangeClient[] _clients;
         private readonly IConnectivityService _connectivityService;
+        private readonly IEventRepository _eventRepository;
 
-        public LoaderService(IDatabaseService databaseService, IExchangeClient[] clients, IConnectivityService connectivityService)
+        public LoaderService(IDatabaseService databaseService, IExchangeClient[] clients, IConnectivityService connectivityService,
+            IEventRepository eventRepository)
         {
             _databaseService = databaseService;
             _clients = clients;
             _connectivityService = connectivityService;
+            _eventRepository = eventRepository;
         }
 
         public async Task<Config> Load()
@@ -41,12 +44,10 @@ namespace bot.core
             {
                 try
                 {            
-                    var lastId = await _databaseService.GetLastEventValue(client.Platform, eventName);
+                    var lastId = await _eventRepository.GetLastEventValue(client.Platform, eventName);
                     var getTradesReasult = await client.GetTrades(lastId, Pair);
-                    if (!string.IsNullOrEmpty(getTradesReasult.LastId))
-                    {
-                        await _databaseService.UpdateLastEvent(client.Platform, eventName, getTradesReasult.LastId);
-                    }
+                    await _databaseService.SaveTrades(getTradesReasult.Results);
+                    await _eventRepository.UpdateLastEvent(client.Platform, eventName, getTradesReasult.LastId);
                 }
                 catch (Exception e)
                 {

@@ -87,86 +87,86 @@ namespace bot.core.tests
             Write("trail_", lines);
         }
 
-        [Test]
-        public async Task RunOneTrail()
-        {
-            var startFall = new DateTime(2017, 10, 07, 00, 0, 0);
-            var end = new DateTime(2017, 10, 08, 8, 00, 0);
-            var db = new DatabaseService();
-            var config = await db.GetConfig();
+        //[Test]
+        //public async Task RunOneTrail()
+        //{
+        //    var startFall = new DateTime(2017, 10, 07, 00, 0, 0);
+        //    var end = new DateTime(2017, 10, 08, 8, 00, 0);
+        //    var db = new DatabaseService();
+        //    var config = await db.GetConfig();
 
-            var result = await RunConfigTrail(config, 65m, startFall, end);
+        //    var result = await RunConfigTrail(config, 65m, startFall, end);
 
-        }
+        //}
 
-        [Test]
-        public async Task RunTrail()
-        {
-            var initialUsd = 65m;
-            var filename= Write("full_trail", true,"Type,LoadInterval,LoadHours,GroupPeriod,Treshold,MacdSlow,MacdFast,MacdSignal,RsiPeriods,RsiLow,RsiHigh,Amount,Buys,Sells");
-            var config = new Config();
+        //[Test]
+        //public async Task RunTrail()
+        //{
+        //    var initialUsd = 65m;
+        //    var filename= Write("full_trail", true,"Type,LoadInterval,LoadHours,GroupPeriod,Treshold,MacdSlow,MacdFast,MacdSignal,RsiPeriods,RsiLow,RsiHigh,Amount,Buys,Sells");
+        //    var config = new Config();
 
-            var values = new Dictionary<string, int[]>()
-            {
-                {nameof(config.LoadIntervalMinutes),new []{3,5,7}},
-                {nameof(config.AnalyseGroupPeriodMinutes),new []{3,4,5}},
-                {nameof(config.AnalyseTresholdMinutes),new []{10,20,30} },
-                {nameof(config.AnalyseMacdSlow),new []{20,26,30} },
-                {nameof(config.AnalyseMacdFast),new []{10,12,15} },
-                {nameof(config.AnalyseMacdSignal),new []{5,9,10} },
-                {nameof(config.AnalyseRsiEmaPeriods),new []{8,14,16} },
-                {nameof(config.AnalyseRsiLow),new []{20,30,35} },
-                {nameof(config.AnalyseRsiHigh),new []{80,70,65} },
-            };
+        //    var values = new Dictionary<string, int[]>()
+        //    {
+        //        {nameof(config.LoadIntervalMinutes),new []{3,5,7}},
+        //        {nameof(config.AnalyseGroupPeriodMinutes),new []{3,4,5}},
+        //        {nameof(config.AnalyseTresholdMinutes),new []{10,20,30} },
+        //        {nameof(config.AnalyseMacdSlow),new []{20,26,30} },
+        //        {nameof(config.AnalyseMacdFast),new []{10,12,15} },
+        //        {nameof(config.AnalyseMacdSignal),new []{5,9,10} },
+        //        {nameof(config.AnalyseRsiEmaPeriods),new []{8,14,16} },
+        //        {nameof(config.AnalyseRsiLow),new []{20,30,35} },
+        //        {nameof(config.AnalyseRsiHigh),new []{80,70,65} },
+        //    };
 
-            var start = new DateTime(2017, 9, 29, 15, 0, 0);
-            var endRise = new DateTime(2017, 9, 30, 23, 0, 0);
-            var end = new DateTime(2017, 10, 05, 8, 00, 0);
+        //    var start = new DateTime(2017, 9, 29, 15, 0, 0);
+        //    var endRise = new DateTime(2017, 9, 30, 23, 0, 0);
+        //    var end = new DateTime(2017, 10, 05, 8, 00, 0);
 
-            var allConfigurations = from AnalyseGroupPeriodMinutes in values[nameof(config.AnalyseGroupPeriodMinutes)]
-                                    from LoadIntervalMinutes in values[nameof(config.LoadIntervalMinutes)]
-                                    from AnalyseTresholdMinutes in values[nameof(config.AnalyseTresholdMinutes)]
-                                    from AnalyseMacdSlow in values[nameof(config.AnalyseMacdSlow)]
-                                    from AnalyseMacdFast in values[nameof(config.AnalyseMacdFast)]
-                                    from AnalyseMacdSignal in values[nameof(config.AnalyseMacdSignal)]
-                                    from AnalyseRsiEmaPeriods in values[nameof(config.AnalyseRsiEmaPeriods)]
-                                    from AnalyseRsiLow in values[nameof(config.AnalyseRsiLow)]
-                                    from AnalyseRsiHigh in values[nameof(config.AnalyseRsiHigh)]
-                                    select new Config()
-                                    {
-                                        AnalyseGroupPeriodMinutes = AnalyseGroupPeriodMinutes,
-                                        AnalyseTresholdMinutes = AnalyseTresholdMinutes,
-                                        AnalyseMacdSlow = AnalyseMacdSlow,
-                                        AnalyseMacdFast = AnalyseMacdFast,
-                                        AnalyseMacdSignal = AnalyseMacdSignal,
-                                        AnalyseRsiEmaPeriods = AnalyseRsiEmaPeriods,
-                                        AnalyseRsiLow = AnalyseRsiLow,
-                                        AnalyseRsiHigh = AnalyseRsiHigh,
-                                        LoadIntervalMinutes = LoadIntervalMinutes,
-                                    };
+        //    var allConfigurations = from AnalyseGroupPeriodMinutes in values[nameof(config.AnalyseGroupPeriodMinutes)]
+        //                            from LoadIntervalMinutes in values[nameof(config.LoadIntervalMinutes)]
+        //                            from AnalyseTresholdMinutes in values[nameof(config.AnalyseTresholdMinutes)]
+        //                            from AnalyseMacdSlow in values[nameof(config.AnalyseMacdSlow)]
+        //                            from AnalyseMacdFast in values[nameof(config.AnalyseMacdFast)]
+        //                            from AnalyseMacdSignal in values[nameof(config.AnalyseMacdSignal)]
+        //                            from AnalyseRsiEmaPeriods in values[nameof(config.AnalyseRsiEmaPeriods)]
+        //                            from AnalyseRsiLow in values[nameof(config.AnalyseRsiLow)]
+        //                            from AnalyseRsiHigh in values[nameof(config.AnalyseRsiHigh)]
+        //                            select new Config()
+        //                            {
+        //                                AnalyseGroupPeriodMinutes = AnalyseGroupPeriodMinutes,
+        //                                AnalyseTresholdMinutes = AnalyseTresholdMinutes,
+        //                                AnalyseMacdSlow = AnalyseMacdSlow,
+        //                                AnalyseMacdFast = AnalyseMacdFast,
+        //                                AnalyseMacdSignal = AnalyseMacdSignal,
+        //                                AnalyseRsiEmaPeriods = AnalyseRsiEmaPeriods,
+        //                                AnalyseRsiLow = AnalyseRsiLow,
+        //                                AnalyseRsiHigh = AnalyseRsiHigh,
+        //                                LoadIntervalMinutes = LoadIntervalMinutes,
+        //                            };
 
 
-            foreach (var configValue in allConfigurations)
-            {
-                await Item("All", initialUsd, configValue, start, end, str=>Write(filename, false,str));
-                await Item("Rise", initialUsd, configValue, start, endRise, str => Write(filename, false, str));
-                await Item("Fall", initialUsd, configValue, endRise, end, str => Write(filename, false, str));
-            }
-        }
+        //    foreach (var configValue in allConfigurations)
+        //    {
+        //        await Item("All", initialUsd, configValue, start, end, str=>Write(filename, false,str));
+        //        await Item("Rise", initialUsd, configValue, start, endRise, str => Write(filename, false, str));
+        //        await Item("Fall", initialUsd, configValue, endRise, end, str => Write(filename, false, str));
+        //    }
+        //}
 
-        private async Task Item(string type, decimal initialUsd, Config config, DateTime start, DateTime end, Action<string> add)
-        {
-            try
-            {
-                var trail = await RunConfigTrail(config, initialUsd, start, end);
-                add(GetLine(type, initialUsd, config, trail));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
+        //private async Task Item(string type, decimal initialUsd, Config config, DateTime start, DateTime end, Action<string> add)
+        //{
+        //    try
+        //    {
+        //        var trail = await RunConfigTrail(config, initialUsd, start, end);
+        //        add(GetLine(type, initialUsd, config, trail));
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine(e);
+        //    }
 
-        }
+        //}
 
         private static string GetLine(string type, decimal initialUsd, Config config, ConfigurationTrailResult trailResult)
         {
@@ -176,68 +176,68 @@ namespace bot.core.tests
                 $"{config.AnalyseRsiHigh},{trailResult.Price:C},{trailResult.BuyNum},{trailResult.SellNum}";
         }
 
-        private async Task<ConfigurationTrailResult> RunConfigTrail(Config config, decimal usd, DateTime start, DateTime end)
-        {
-            var db = new DatabaseService();
-            var result = new ConfigurationTrailResult();
-            var core = new TradeService();
-            var currentTime = start;
+        //private async Task<ConfigurationTrailResult> RunConfigTrail(Config config, decimal usd, DateTime start, DateTime end)
+        //{
+        //    var db = new DatabaseService();
+        //    var result = new ConfigurationTrailResult();
+        //    var core = new TradeService();
+        //    var currentTime = start;
           
-            var currentUsd = usd;
-            var currentEth = decimal.Zero;
-            var price = decimal.Zero;
-            TradeStatus? lastStatus = null;
-            while (currentTime <= end)
-            {
-                var trades = await db.LoadTrades("XETHZUSD", currentTime.AddHours(-config.AnalyseLoadHours), currentTime);
+        //    var currentUsd = usd;
+        //    var currentEth = decimal.Zero;
+        //    var price = decimal.Zero;
+        //    TradeStatus? lastStatus = null;
+        //    while (currentTime <= end)
+        //    {
+        //        var trades = await db.LoadTrades("XETHZUSD", currentTime.AddHours(-config.AnalyseLoadHours), currentTime);
 
-                try
-                {
-                    var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-                    var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).MacdAnalysis();
-                    var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
-                    var rsiLastPeak = rsi.GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
-                        .FirstOrDefault();
-                    var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, currentTime, macd, rsiLastPeak);
-                    var trade = grouped.FirstOrDefault(x => x.DateTime == macd.Trade.DateTime);
-                    if (trade == null)
-                    {
-                        throw new Exception($"Trade is not identified. {config}");
-                    }
-                    if (newStatus != TradeStatus.Unknown && (lastStatus == null || newStatus != lastStatus))
-                    {
-                        lastStatus = newStatus;
-                        if (newStatus == TradeStatus.Buy)
-                        {
-                            price = Math.Round(trade.PriceBuyAvg == decimal.Zero ? trade.Price : trade.PriceBuyAvg, 2);
-                            var fee = core.Transform(usd, price, 0.26m);
-                           // currentEth = fee.TargetCurrencyAmount;
-                            currentUsd = fee.BaseCurrencyRest;
-                            result.BuyNum += 1;
-                        }
-                        else if (currentEth != decimal.Zero)
-                        {
-                            price = trade.PriceSellAvg == decimal.Zero ? trade.Price : trade.PriceSellAvg;
+        //        try
+        //        {
+        //            var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
+        //            var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).MacdAnalysis();
+        //            var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
+        //            var rsiLastPeak = rsi.GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
+        //                .FirstOrDefault();
+        //            var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, currentTime, macd, rsiLastPeak);
+        //            var trade = grouped.FirstOrDefault(x => x.DateTime == macd.Trade.DateTime);
+        //            if (trade == null)
+        //            {
+        //                throw new Exception($"Trade is not identified. {config}");
+        //            }
+        //            if (newStatus != TradeStatus.Unknown && (lastStatus == null || newStatus != lastStatus))
+        //            {
+        //                lastStatus = newStatus;
+        //                if (newStatus == TradeStatus.Buy)
+        //                {
+        //                    price = Math.Round(trade.PriceBuyAvg == decimal.Zero ? trade.Price : trade.PriceBuyAvg, 2);
+        //                    var fee = core.Transform(usd, price, 0.26m);
+        //                   // currentEth = fee.TargetCurrencyAmount;
+        //                    currentUsd = fee.BaseCurrencyRest;
+        //                    result.BuyNum += 1;
+        //                }
+        //                else if (currentEth != decimal.Zero)
+        //                {
+        //                    price = trade.PriceSellAvg == decimal.Zero ? trade.Price : trade.PriceSellAvg;
                             
-                            var fee = core.Transform(currentEth, price, 0.16m, FeeSource.Target);
-                            currentUsd = fee.TargetCurrencyAmount;
-                           // currentEth = fee.BaseCurrencyRest;
-                            result.SellNum += 1;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"{config}{Environment.NewLine}{e}");
-                    return result;
-                }
+        //                    var fee = core.Transform(currentEth, price, 0.16m, FeeSource.Target);
+        //                    currentUsd = fee.TargetCurrencyAmount;
+        //                   // currentEth = fee.BaseCurrencyRest;
+        //                    result.SellNum += 1;
+        //                }
+        //            }
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            Console.WriteLine($"{config}{Environment.NewLine}{e}");
+        //            return result;
+        //        }
 
-                currentTime = currentTime.AddMinutes(config.LoadIntervalMinutes);
-            }
+        //        currentTime = currentTime.AddMinutes(config.LoadIntervalMinutes);
+        //    }
 
-            result.Price = currentEth * price + currentUsd;
-            return result;
-        }
+        //    result.Price = currentEth * price + currentUsd;
+        //    return result;
+        //}
 
     
 

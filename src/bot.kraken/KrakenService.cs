@@ -38,6 +38,7 @@ namespace bot.kraken
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
 
+
         public KrakenClientService(Config config)
         {
             _credentials = config;

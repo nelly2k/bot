@@ -60,7 +60,16 @@ create table lastEvent(
 	platform nvarchar(50),
 	name nvarchar(150) not null,
 	datetime datetime,
-	value nvarchar
+	value nvarchar(MAX)
 )
 go
 
+
+create table balance(
+	platform nvarchar(50),
+	name nvarchar(15),
+	volume decimal,
+	price decimal, 
+	notSoldCounter int,
+	boughtDate Datetime
+)

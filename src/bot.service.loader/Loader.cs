@@ -29,7 +29,7 @@ namespace bot.service.loader
             _container.RegisterInstance(new Config());
             _container.RegisterAssembleyWith<IKrakenDataService>();
             _container.RegisterAssembleyWith<IDatabaseService>();
-            _container.RegisterType<IExchangeClient, KrakenClientService>();
+            _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
         }
 
@@ -56,8 +56,8 @@ namespace bot.service.loader
                 {
                     _container.RegisterInstance(r.Result);
                     _timer.Interval = _container.Resolve<Config>().LoadIntervalMinutes * 60 * 1000;
-                });
-
+                }).Wait(new TimeSpan(0,0,2));
+                
             }
             finally
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace bot.core
@@ -56,16 +57,13 @@ namespace bot.core
             }
         }
 
-        //public decimal GetLoss(decimal sellPrice, int minLoss)
-        //{
-            
-        //}
-
         private class BalanceItem
         {
             public decimal Volume { get; set; }
             public decimal Price { get; set; }
             public int NotSold { get; set; }
+
+            public DateTime DateTime { get; set; }
         }
     }
 

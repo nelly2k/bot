@@ -14,7 +14,7 @@ namespace bot.core.trading
 
         static void Main(string[] args)
         {
-            _tradeService = new TradeService();
+          
             _db = new DatabaseService();
 
             _timer = new Timer(3 * 60 * 1000);
@@ -27,13 +27,7 @@ namespace bot.core.trading
 
         static void Timer_Elapsed(object sender, EventArgs e)
         {
-            if (!ConnectivityService.CheckForInternetConnection())
-            {
-                Console.WriteLine($"{DateTime.Now:F} Connection is not available");
-                _timer.Interval = 10 * 60 * 1000;
-                return;
-            }
-            
+           
             Task.Run(RunAsync).ContinueWith(r =>
             {
                 _timer.Interval = (r.Result?.LoadIntervalMinutes ?? 3) * 60 * 1000;

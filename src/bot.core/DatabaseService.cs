@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,18 +12,22 @@ namespace bot.core
     {
         Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
         Task Log(string platform, string status, string what);
-        Task UpdateLastEvent(string plateform, string eventName, string value);
-        Task<string> GetLastEventValue(string platform, string eventName);
         Task<Config> GetConfig();
+        Task SaveTrades(List<ITrade> trades);
     }
 
     public class DatabaseService : IDatabaseService
     {
-        private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
+        private readonly string _connectionString;
+
+        public DatabaseService()
+        {
+            _connectionString=ConfigurationManager.AppSettings["db"];
+        }
 
         public async Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null)
         {
-            using (var con = new SqlConnection(connectionString))
+            using (var con = new SqlConnection(_connectionString))
             {
                 var sb = new StringBuilder();
                 sb.Append(@" select tradeTime, price, volume, buy_sell from trades
@@ -67,7 +72,7 @@ namespace bot.core
 
         public async Task Log(string platform, string status, string what)
         {
-            using (var con = new SqlConnection(connectionString))
+            using (var con = new SqlConnection(_connectionString))
             {
                 var text = @"INSERT INTO [dbo].[log]
            ([platform]
@@ -102,53 +107,10 @@ namespace bot.core
             {"api_secret", (c, v) => c.Secret = v.ToString()},
         };
 
-        public async Task UpdateLastEvent(string plateform, string eventName, string value)
-        {
-            using (var con = new SqlConnection(connectionString))
-            {
-                var text = @"
-                if exists (select * from lastEvent where name = @name and platform=@platform)
-                begin
-                   update lastEvent set datetime=getdate(), value=@value where name=@name and platform=@platform
-                end
-                else
-                begin
-                 insert into lastEvent VALUES(@platform, @name, getdate(), @value)
-                end";
-                con.Open();
-                using (var com = new SqlCommand(text, con))
-                {
-                    com.Parameters.AddWithValue("@name", eventName);
-                    com.Parameters.AddWithValue("@value", value);
-                    com.Parameters.AddWithValue("@plateform", plateform);
-                    await com.ExecuteNonQueryAsync();
-                    con.Close();
-                }
-            }
-        }
-
-        public async Task<string> GetLastEventValue(string platform, string eventName)
-        {
-            using (var con = new SqlConnection(connectionString))
-            {
-                var text = @"select value from lastEvent where name=@eventName and platform=@platform";
-                con.Open();
-                using (var com = new SqlCommand(text, con))
-                {
-                    com.Parameters.AddWithValue("@name", eventName);
-                    com.Parameters.AddWithValue("@platform", platform);
-
-                    var result=  await com.ExecuteScalarAsync();
-
-                    con.Close();
-                    return result?.ToString();
-                }
-            }
-        }
-
+    
         public async Task<Config> GetConfig()
         {
-            using (var con = new SqlConnection(connectionString))
+            using (var con = new SqlConnection(_connectionString))
             {
                 var commandText = @"select name, value from config where platform='kraken'";
                 con.Open();
@@ -171,7 +133,47 @@ namespace bot.core
             }
         }
 
-        
+        public async Task SaveTrades(List<ITrade> trades)
+        {
+            using (var con = new SqlConnection(_connectionString))
+            {
+                var commandText = @"INSERT INTO [dbo].[Trades]
+           ([altname]
+           ,[price]
+           ,[volume]
+           ,[tradeTime]
+           ,[buy_sell]
+           ,[market_limit]
+           ,[misc])
+     VALUES
+           (@altname
+           ,@price
+           ,@volume
+           ,@tradeTime
+           ,@buy_sell
+           ,@market_limit
+           ,@misc)";
+                con.Open();
+                foreach (var trade in trades)
+                {
+                    using (var command = new SqlCommand(commandText, con))
+                    {
+                        command.Parameters.AddWithValue("@altname", trade.PairName);
+                        command.Parameters.AddWithValue("@price", trade.Price);
+                        command.Parameters.AddWithValue("@volume", trade.Volume);
+                        command.Parameters.AddWithValue("@tradeTime", trade.DateTime);
+                        command.Parameters.AddWithValue("@buy_sell", trade.TransactionType == TransactionType.Buy ? "b" : "s");
+                        command.Parameters.AddWithValue("@market_limit", trade.PriceType == PriceType.Limit ? "l" : "m");
+                        command.Parameters.AddWithValue("@misc", trade.Misc);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+                con.Close();
+            }
+
+        }
+
+
     }
     
 }

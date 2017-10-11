@@ -9,7 +9,7 @@ namespace bot.kraken
 {
     public interface IKrakenDataService:IService
     {
-        Task Save(List<KrakenTrade> trades);
+        Task Save(List<BaseTrade> trades);
         Task<string> GetId(string altname);
         Task SaveLastId(string altname, string lastId);
     }
@@ -19,7 +19,7 @@ namespace bot.kraken
 
         private string connectionString = "Server=(local);Database=bot;User Id=serviceAccount;Password=Exol37an1;";
 
-        public async Task Save(List<KrakenTrade> trades)
+        public async Task Save(List<BaseTrade> trades)
         {
             using (var con = new SqlConnection(connectionString))
             {

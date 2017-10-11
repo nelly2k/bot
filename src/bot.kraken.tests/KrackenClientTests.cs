@@ -17,7 +17,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetServerTime()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var time = await cr.GetServerTime();
             Assert.That(time.Rfc1123, Is.Not.Null);
         }
@@ -25,7 +25,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetAssetInfo()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var result = await cr.GetAssetInfo();
             Assert.That(result, Is.Not.Null);
         }
@@ -33,7 +33,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetEtherAssetInfo()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var result = await cr.GetAssetInfo(assets: "ETH");
             Assert.That(result.Values.First().Altname, Is.EqualTo("ETH"));
         }
@@ -41,7 +41,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetAssetPairs()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var result = await cr.GetTradableAssetPairs();
             Assert.That(result, Is.Not.Null);
         }
@@ -49,7 +49,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetTrades()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var result = await cr.GetTrades(pairs: "ETHUSD");
             Assert.That(result.LastId, Is.Not.Null);
             Assert.That(result.Results, Is.Not.Null);
@@ -58,7 +58,7 @@ namespace bot.kraken.test
         [Test]
         public void BuildUrl()
         {
-            var cr = new KrakenClientService();
+            var cr = new KrakenClientService(new Config());
             var url = cr.BuildPublicPath("Asset", new Dictionary<string, string>() { { "asset", "ETH" } });
 
             Assert.That(url, Is.EqualTo("https://api.kraken.com/0/public/Asset?asset=ETH"));
@@ -68,7 +68,7 @@ namespace bot.kraken.test
         [Test]
         public async Task AddTradeToDb()
         {
-            var trade = new Trade()
+            var trade = new BaseTrade()
             {
                 PairName = "TEST",
                 Price = (decimal)12.0005,
@@ -79,7 +79,7 @@ namespace bot.kraken.test
                 DateTime = new DateTime(2015, 5, 15)
             };
             var d = new KrakenDataService();
-            await d.Save(new List<Trade>() { trade });
+            await d.Save(new List<BaseTrade>() { trade });
         }
 
         [Test]
