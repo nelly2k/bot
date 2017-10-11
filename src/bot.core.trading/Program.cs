@@ -8,13 +8,13 @@ namespace bot.core.trading
 {
     class Program
     {
-        private static CoreService _coreService;
+        private static TradeService _tradeService;
         private static DatabaseService _db;
         private static Timer _timer;
 
         static void Main(string[] args)
         {
-            _coreService = new CoreService();
+            _tradeService = new TradeService();
             _db = new DatabaseService();
 
             _timer = new Timer(3 * 60 * 1000);
@@ -56,7 +56,7 @@ namespace bot.core.trading
         static async Task<Config> RunAsync()
         {
             var config = await _db.GetConfig();
-            await _coreService.SetStatus(config).ContinueWith(r =>
+            await _tradeService.SetStatus(config).ContinueWith(r =>
             {
                 if (r.IsFaulted && r.Exception != null)
                 {

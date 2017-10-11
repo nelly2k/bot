@@ -8,7 +8,7 @@ namespace bot.core.Extensions
     public static class CalculationExtensions
     {
 
-        public static IEnumerable<ITrade> SimpleMovingAverage(this IEnumerable<ITrade> list, int num)
+        public static IEnumerable<IDateCost> SimpleMovingAverage(this IEnumerable<IDateCost> list, int num)
         {
             if (list.Count() <= num)
             {
@@ -36,7 +36,7 @@ namespace bot.core.Extensions
             }
         }
 
-        public static IEnumerable<ITrade> ExponentialMovingAverage(this IEnumerable<ITrade> list, int num)
+        public static IEnumerable<IDateCost> ExponentialMovingAverage(this IEnumerable<IDateCost> list, int num)
         {
             if (list.Count() <= num)
             {
@@ -59,7 +59,7 @@ namespace bot.core.Extensions
             }
         }
 
-        public static IEnumerable<ITrade> Change(this IEnumerable<ITrade> list)
+        public static IEnumerable<IDateCost> Change(this IEnumerable<IDateCost> list)
         {
             for (var i = 1; i < list.Count(); i++)
             {
@@ -72,7 +72,7 @@ namespace bot.core.Extensions
             }
         }
 
-        public static IEnumerable<ITrade> RelativeStrengthIndex(this IEnumerable<ITrade> list, int num = 14, MovingAverageStyle movingAverageStyle = MovingAverageStyle.EMA)
+        public static IEnumerable<IDateCost> RelativeStrengthIndex(this IEnumerable<IDateCost> list, int num = 14, MovingAverageStyle movingAverageStyle = MovingAverageStyle.EMA)
         {
             var change = list.Change().ToList();
             var gain = change.Select(x => x.Price > 0 ? x : new BaseTrade { DateTime = x.DateTime, Price = decimal.Zero }).ToArray();
@@ -110,7 +110,7 @@ namespace bot.core.Extensions
             }
         }
 
-        public static IEnumerable<MacdResultItem> Macd(this IEnumerable<ITrade> list, int macdSlow, int macdFast,
+        public static IEnumerable<MacdResultItem> Macd(this IEnumerable<IDateCost> list, int macdSlow, int macdFast,
             int signalNum)
         {
             var slow = list.ExponentialMovingAverage(macdSlow);

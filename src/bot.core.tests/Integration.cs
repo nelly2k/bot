@@ -180,7 +180,7 @@ namespace bot.core.tests
         {
             var db = new DatabaseService();
             var result = new ConfigurationTrailResult();
-            var core = new CoreService();
+            var core = new TradeService();
             var currentTime = start;
           
             var currentUsd = usd;

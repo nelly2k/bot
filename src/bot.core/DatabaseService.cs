@@ -11,8 +11,8 @@ namespace bot.core
     {
         Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
         Task Log(string platform, string status, string what);
-        Task UpdateLastEvent(string eventName, string value);
-        Task<string> GetLastEventValue(string eventName);
+        Task UpdateLastEvent(string plateform, string eventName, string value);
+        Task<string> GetLastEventValue(string platform, string eventName);
         Task<Config> GetConfig();
     }
 
@@ -102,39 +102,41 @@ namespace bot.core
             {"api_secret", (c, v) => c.Secret = v.ToString()},
         };
 
-        public async Task UpdateLastEvent(string eventName, string value)
+        public async Task UpdateLastEvent(string plateform, string eventName, string value)
         {
             using (var con = new SqlConnection(connectionString))
             {
                 var text = @"
-                if exists (select * from lastEvent where name = @name)
+                if exists (select * from lastEvent where name = @name and platform=@platform)
                 begin
-                   update lastEvent set datetime=getdate(), value=@value where name=@name
+                   update lastEvent set datetime=getdate(), value=@value where name=@name and platform=@platform
                 end
                 else
                 begin
-                 insert into lastEvent VALUES(@name, getdate(), @value)
+                 insert into lastEvent VALUES(@platform, @name, getdate(), @value)
                 end";
                 con.Open();
                 using (var com = new SqlCommand(text, con))
                 {
                     com.Parameters.AddWithValue("@name", eventName);
                     com.Parameters.AddWithValue("@value", value);
+                    com.Parameters.AddWithValue("@plateform", plateform);
                     await com.ExecuteNonQueryAsync();
                     con.Close();
                 }
             }
         }
 
-        public async Task<string> GetLastEventValue(string eventName)
+        public async Task<string> GetLastEventValue(string platform, string eventName)
         {
             using (var con = new SqlConnection(connectionString))
             {
-                var text = @"select value from lastEvent where name=@eventName";
+                var text = @"select value from lastEvent where name=@eventName and platform=@platform";
                 con.Open();
                 using (var com = new SqlCommand(text, con))
                 {
                     com.Parameters.AddWithValue("@name", eventName);
+                    com.Parameters.AddWithValue("@platform", platform);
 
                     var result=  await com.ExecuteScalarAsync();
 

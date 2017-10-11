@@ -1,20 +1,23 @@
+create database bot;
+go
+use bot;
 
-create table Pairs(
-	id int not null identity constraint pk_pairs primary key,
-	altname nvarchar(15),
-	aclass_base  nvarchar(30),
-	base  nvarchar(15),
-	aclass_quote nvarchar(30),
-    quote nvarchar(15),
-    lot nvarchar(15),
-    pair_decimals int,
-    lot_decimals int,
-    lot_multiplier int,
-    margin_call int,
-    margin_stop int
-)
+--create table Pairs(
+--	id int not null identity constraint pk_pairs primary key,
+--	altname nvarchar(15),
+--	aclass_base  nvarchar(30),
+--	base  nvarchar(15),
+--	aclass_quote nvarchar(30),
+--    quote nvarchar(15),
+--    lot nvarchar(15),
+--    pair_decimals int,
+--    lot_decimals int,
+--    lot_multiplier int,
+--    margin_call int,
+--    margin_stop int
+--)
 
-create table Trades(
+create table trades(
 	id int not null identity constraint pk_trades primary key,
 	altname nvarchar(15),
 	price decimal,
@@ -25,12 +28,6 @@ create table Trades(
 	misc NVARCHAR(100)
 )
 
-
-create table lastid(
-	altname nvarchar(15),
-	time DATETIME constraint df_lastid_time default(getdate()),
-	id nvarchar(15)
-)
 
 create table config(
 	platform nvarchar(50),
@@ -60,17 +57,10 @@ create table log(
 )
 
 create table lastEvent(
+	platform nvarchar(50),
 	name nvarchar(150) not null,
 	datetime datetime,
 	value nvarchar
 )
 go
-insert into lastEvent
-values ('kraken load', null,null)
-
-insert into lastEvent
-values ('kraken analysis', null,null)
-
-insert into lastEvent
-values ('kraken stop-loss', null,null)
 

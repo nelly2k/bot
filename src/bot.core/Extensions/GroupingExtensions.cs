@@ -72,7 +72,7 @@ namespace bot.core.Extensions
         }
     }
 
-    public class GroupResult : ITrade
+    public class GroupResult : IDateCost
     {
         public DateTime DateTime { get; set; }
         public decimal Volume { get; set; }

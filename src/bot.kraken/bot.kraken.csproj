@@ -58,12 +58,8 @@
     <Compile Include="Model\KrakenResponse.cs" />
     <Compile Include="Model\OrderPriceType.cs" />
     <Compile Include="Model\OrderType.cs" />
-    <Compile Include="Model\PriceType.cs" />
     <Compile Include="Model\ServerTime.cs" />
-    <Compile Include="Model\SinceResponse.cs" />
     <Compile Include="Model\SubmitOrder.cs" />
-    <Compile Include="Model\Trade.cs" />
-    <Compile Include="Model\TransactionType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

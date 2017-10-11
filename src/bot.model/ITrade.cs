@@ -2,25 +2,32 @@
 
 namespace bot.model
 {
-    public interface ITrade
+    public interface IDateCost
+    {
+        DateTime DateTime { get; set; }
+        decimal Price { get; set; }
+    }
+    
+    public interface ITrade: IDateCost
     {
         string PairName { get; set; }
-        decimal Price { get; set; }
         decimal Volume { get; set; }
         TradeType TradeType { get; set; }
-        DateTime DateTime { get; set; }
-     
-
+        TransactionType TransactionType { get; set; }
+        PriceType PriceType { get; set; }
         string Misc { get; set; }
     }
 
     public class BaseTrade:ITrade
     {
-        public DateTime DateTime { get; set; }
+        public string PairName { get; set; }
         public decimal Price { get; set; }
         public decimal Volume { get; set; }
-
         public TradeType TradeType { get; set; }
+        public DateTime DateTime { get; set; }
+        public TransactionType TransactionType { get; set; }
+        public PriceType PriceType { get; set; }
+        public string Misc { get; set; }
     }
 
     public enum TradeType

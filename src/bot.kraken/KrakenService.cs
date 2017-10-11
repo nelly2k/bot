@@ -38,9 +38,9 @@ namespace bot.kraken
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
 
-        public KrakenClientService(IApiCredentials credentials)
+        public KrakenClientService(Config config)
         {
-            _credentials = credentials;
+            _credentials = config;
         }
 
         public async Task<ServerTime> GetServerTime()
@@ -64,7 +64,9 @@ namespace bot.kraken
             return await CallPublic<Dictionary<string, AssetPair>>("AssetPairs", paramPairs);
         }
 
-      
+
+        public string Platform => "kraken";
+
         public async Task<SinceResponse<ITrade>> GetTrades(string lastId = null, params string[] pairs)
         {
             var paramPairs = new Dictionary<string, string>()
@@ -88,7 +90,7 @@ namespace bot.kraken
                 }
                 foreach (var arr in trades)
                 {
-                    result.Results.Add(new KrakenTrade
+                    result.Results.Add(new BaseTrade
                     {
                         PairName = tradesPair.Key,
                         Price = (decimal)arr[0],

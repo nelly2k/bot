@@ -14,7 +14,6 @@ namespace bot.core.Extensions
 
             var services = typeof(T).Assembly.GetTypes().Where(x => baseService.IsAssignableFrom(x));
 
-
             foreach (var interf in services.Where(x => x.IsInterface))
             {
                 var implementation = services.FirstOrDefault(x => interf.IsAssignableFrom(x) && !x.IsInterface);
@@ -25,7 +24,11 @@ namespace bot.core.Extensions
 
                 container.RegisterType(interf, implementation);
             }
+        }
 
+        public static void RegisterDateTime(this UnityContainer container)
+        {
+            container.RegisterType<IDateTime, DateTimeService>();
         }
     }
 }

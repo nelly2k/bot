@@ -73,18 +73,18 @@ namespace bot.core.Extensions
             return result;
         }
 
-        public static IEnumerable<PeakAnalysisResult> GetPeaks(this IEnumerable<ITrade> list, int lowBorder,
+        public static IEnumerable<PeakAnalysisResult> GetPeaks(this IEnumerable<IDateCost> list, int lowBorder,
             int highBorder)
         {
             var result = new List<PeakAnalysisResult>();
 
             var arr = list.OrderByDescending(x => x.DateTime).ToArray();
 
-            ITrade lowPeak = null;
-            ITrade lowExit = null;
+            IDateCost lowPeak = null;
+            IDateCost lowExit = null;
 
-            ITrade highPeak = null;
-            ITrade highExit = null;
+            IDateCost highPeak = null;
+            IDateCost highExit = null;
 
             foreach (var trade in arr)
             {
@@ -146,8 +146,8 @@ namespace bot.core.Extensions
 
     public class PeakAnalysisResult
     {
-        public ITrade PeakTrade { get; set; }
-        public ITrade ExitTrade { get; set; }
+        public IDateCost PeakTrade { get; set; }
+        public IDateCost ExitTrade { get; set; }
         public PeakType PeakType { get; set; }
     }
 
@@ -159,7 +159,7 @@ namespace bot.core.Extensions
     public class MacdAnalysisResult
     {
         public CrossType? CrossType { get; set; }
-        public ITrade Trade { get; set; }
+        public IDateCost Trade { get; set; }
     }
 
     public enum CrossType
