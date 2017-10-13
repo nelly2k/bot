@@ -1,7 +1,10 @@
-﻿namespace bot.model
+﻿using System.Collections.Generic;
+
+namespace bot.model
 {
     public class Config:IApiCredentials
     {
+
         public int LoadIntervalMinutes { get; set; } = 3;
         public int AnalyseLoadHours { get; set; } = 12;
         public int AnalyseGroupPeriodMinutes { get; set; } = 4;
@@ -13,6 +16,8 @@
         public int AnalyseRsiLow{ get; set; } = 30;
         public int AnalyseRsiHigh{ get; set; } = 70;
         public int MaxMissedSells { get; set; } = 3;
+
+        public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();
 
         public string Key{ get; set; } 
         public string Secret{ get; set; } 

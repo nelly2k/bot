@@ -38,6 +38,7 @@ namespace bot.core
         /// <summary>
         /// 3. load balance
         /// If status buy
+        /// 
         /// Find out how much I can buy
         /// </summary>
         /// <returns></returns>

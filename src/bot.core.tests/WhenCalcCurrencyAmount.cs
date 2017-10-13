@@ -9,7 +9,8 @@ namespace bot.core.tests
         public void Setup()
         {
             var dbService = Substitute.For<IDatabaseService>();
-            core = new TradeService(dbService, new DateTimeService());
+            var eventSubstitute = Substitute.For<IEventRepository>();
+            core = new TradeService(dbService, new DateTimeService(), eventSubstitute);
         }
         
         [Test]

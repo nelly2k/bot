@@ -103,6 +103,13 @@ namespace bot.core
             {"analyse_rsi_ema_periods", (c, v) => c.AnalyseRsiEmaPeriods = Convert.ToInt32(v)},
             {"analyse_rsi_low", (c, v) => c.AnalyseRsiLow = Convert.ToInt32(v)},
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
+            {"min_buy_usd", (c, v) => c.MinBuyUsd = Convert.ToInt32(v)},
+            {"pair_percent", (c, v) =>
+                {
+                    var p = v.ToString().Split('|');
+                    c.PairPercent.Add(p[0], Convert.ToDouble(p[1]));
+                }
+            },
             {"api_key", (c, v) => c.Key = v.ToString()},
             {"api_secret", (c, v) => c.Secret = v.ToString()},
         };

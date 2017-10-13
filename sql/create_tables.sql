@@ -48,6 +48,10 @@ insert into config values ('kraken', 'analyse_rsi_low',35)
 insert into config values ('kraken', 'analyse_rsi_high',70)
 insert into config values ('kraken', 'api_key','')
 insert into config values ('kraken', 'api_secret','')
+insert into config values ('kraken', 'max_missed_sells',3)
+insert into config values ('kraken', 'pair_percent','XETHZUSD|60')
+insert into config values ('kraken', 'min_buy_usd','2')
+
 
 create table log(
 	platform nvarchar(50),
@@ -71,5 +75,12 @@ create table balance(
 	volume decimal,
 	price decimal, 
 	notSoldCounter int,
-	boughtDate Datetime
+	notSoldDate DateTime,
+	boughtDate Datetime,
+)
+
+create openOrder(
+	platform nvarchar(50),
+	altname nvarchar(15),
+	id nvarchar(500)
 )
