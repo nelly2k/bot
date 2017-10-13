@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using bot.model;
@@ -12,18 +11,11 @@ namespace bot.core
         Task<string> GetLastEventValue(string platform, string eventName);
     }
 
-    public class EventRepository : IEventRepository
+    public class EventRepository :BaseRepository, IEventRepository
     {
-        private readonly string _connectionString;
-
-        public EventRepository()
-        {
-            _connectionString = ConfigurationManager.AppSettings["db"];
-        }
-
         public async Task UpdateLastEvent(string platform, string eventName, string value)
         {
-            using (var con = new SqlConnection(_connectionString))
+            using (var con = new SqlConnection(ConnectionString))
             {
                 var text = @"
                 if exists (select * from lastEvent where name = @name and platform=@platform)
@@ -48,7 +40,7 @@ namespace bot.core
 
         public async Task<string> GetLastEventValue(string platform, string eventName)
         {
-            using (var con = new SqlConnection(_connectionString))
+            using (var con = new SqlConnection(ConnectionString))
             {
                 var text = @"select value from lastEvent where name=@eventName and platform=@platform";
                 con.Open();
