@@ -79,8 +79,9 @@ create table balance(
 	boughtDate Datetime,
 )
 
-create openOrder(
+create table openOrder(
+	
 	platform nvarchar(50),
 	altname nvarchar(15),
-	id nvarchar(500)
+	id nvarchar(500) 
 )

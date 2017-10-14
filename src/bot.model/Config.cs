@@ -15,6 +15,7 @@ namespace bot.model
         public int AnalyseRsiEmaPeriods { get; set; } = 14;
         public int AnalyseRsiLow{ get; set; } = 30;
         public int AnalyseRsiHigh{ get; set; } = 70;
+        public int MinBuyUsd{ get; set; } = 2;
         public int MaxMissedSells { get; set; } = 3;
 
         public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();

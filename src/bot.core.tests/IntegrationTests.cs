@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using bot.core.Extensions;
 using bot.kraken;
@@ -20,7 +19,6 @@ namespace bot.core.tests
         {
             _container = new UnityContainer();
             _container.RegisterInstance(new Config());
-            _container.RegisterAssembleyWith<IKrakenDataService>();
             _container.RegisterAssembleyWith<IDatabaseService>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();

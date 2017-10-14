@@ -15,7 +15,7 @@ using Newtonsoft.Json.Linq;
 
 namespace bot.kraken
 {
-    public interface IKrakenClientService:IService, IExchangeClient
+    public interface IKrakenClientService:IExchangeClient
     {
         Task<ServerTime> GetServerTime();
         Task<Dictionary<string, Asset>> GetAssetInfo(string assetClass = "currency", params string[] assets);

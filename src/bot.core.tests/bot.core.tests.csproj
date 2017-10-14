@@ -134,6 +134,8 @@
     <Compile Include="WhenGrouping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WhenManagingBalance.cs" />
+    <Compile Include="WhenQueryingBalanceRepository.cs" />
+    <Compile Include="WhenQueryingOrders.cs" />
     <Compile Include="WhenRegisterComponents.cs" />
     <Compile Include="WhenSearchForPeaks.cs" />
   </ItemGroup>

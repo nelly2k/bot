@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace bot.core
 {
@@ -14,13 +14,16 @@ namespace bot.core
             ConnectionString = ConfigurationManager.AppSettings["db"];
         }
 
-        protected void Get(string query, Dictionary<string, object> parameters, Action<SqlDataReader> readerAction)
+        protected async Task Execute(Func<SqlCommand, Task> command)
         {
             using (var con = new SqlConnection(ConnectionString))
             {
-                using (var cmd = new SqlCommand(query,con))
+                using (var cms = new SqlCommand())
                 {
+                    cms.Connection = con;
                     con.Open();
+                    await command(cms);
+                    con.Close();
                 }
             }
         }

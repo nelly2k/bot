@@ -1,4 +1,5 @@
-﻿using bot.core.Extensions;
+﻿using System.Linq;
+using bot.core.Extensions;
 using bot.kraken;
 using bot.model;
 using Microsoft.Practices.Unity;
@@ -12,11 +13,11 @@ namespace bot.core.tests
         public void RegisterAndResolve()
         {
             var container = new UnityContainer();
-            container.RegisterAssembleyWith< IKrakenDataService>();
+            container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             container.RegisterInstance<IApiCredentials>(new Config());
-            var client = container.Resolve<IKrakenClientService>();
+            var client = container.ResolveAll<IExchangeClient>();
 
-            Assert.That(client, Is.Not.Null);
+            Assert.That(client.Count(), Is.GreaterThan(0));
         }
     }
 }

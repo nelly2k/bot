@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CredentialsInvalidException.cs" />
-    <Compile Include="KrakenDataService.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="KrakenService.cs" />
     <Compile Include="Model\Asset.cs" />

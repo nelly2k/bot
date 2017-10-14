@@ -66,47 +66,6 @@ namespace bot.kraken.test
         }
 
         [Test]
-        public async Task AddTradeToDb()
-        {
-            var trade = new BaseTrade()
-            {
-                PairName = "TEST",
-                Price = (decimal)12.0005,
-                Volume = (decimal)4.0005,
-                TransactionType = TransactionType.Buy,
-                PriceType = PriceType.Market,
-                Misc = "TEST transaction",
-                DateTime = new DateTime(2015, 5, 15)
-            };
-            var d = new KrakenDataService();
-            await d.Save(new List<BaseTrade>() { trade });
-        }
-
-        [Test]
-        public async Task SaveLastId()
-        {
-            var d = new KrakenDataService();
-            await d.SaveLastId("TEST", "3216549848454564545");
-            Assert.That(await d.GetId("TEST"), Is.EqualTo("3216549848454564545"));
-        }
-
-        [Test]
-        public async Task GetLastId()
-        {
-            var d = new KrakenDataService();
-            var result = await d.GetId("TEST");
-            Assert.That(result, Is.EqualTo("321"));
-        }
-
-        [Test]
-        public async Task GetLastId_Not_exists()
-        {
-            var d = new KrakenDataService();
-            var result = await d.GetId("EXT");
-            Assert.That(result, Is.Null);
-        }
-
-        [Test]
         public async Task GetBalance()
         {
             var cr = new KrakenClientService(await GetConfig());
