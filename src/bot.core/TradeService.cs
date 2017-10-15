@@ -23,14 +23,17 @@ namespace bot.core
         private readonly IDatabaseService _databaseService;
         private readonly IDateTime _dateTime;
         private readonly IEventRepository _eventRepository;
+        private readonly IConfigRepository _configRepository;
         private const string Pair = "XETHZUSD";
         private const string Platform = "kraken";
 
-        public TradeService(IDatabaseService databaseService, IDateTime dateTime, IEventRepository eventRepository)
+        public TradeService(IDatabaseService databaseService, IDateTime dateTime, IEventRepository eventRepository,
+            IConfigRepository configRepository)
         {
             _databaseService = databaseService;
             _dateTime = dateTime;
             _eventRepository = eventRepository;
+            _configRepository = configRepository;
         }
 
         public static TradeStatus TradeStatus = TradeStatus.Unknown;
@@ -44,7 +47,7 @@ namespace bot.core
         /// <returns></returns>
         public async Task Trade()
         {
-            var config = await _databaseService.GetConfig();
+            var config = await _configRepository.Get();
             
             var currentStatus = GetCurrentStatus();
 

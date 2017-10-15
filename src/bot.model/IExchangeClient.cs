@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace bot.model
 {
@@ -6,5 +7,7 @@ namespace bot.model
     {
         string Platform { get; }
         Task<SinceResponse<ITrade>> GetTrades(string lastId = null, params string[] pairs);
+
+        Task<Dictionary<string, OrderStatus>> GetOrderStatus(params string[] refs);
     }
 }

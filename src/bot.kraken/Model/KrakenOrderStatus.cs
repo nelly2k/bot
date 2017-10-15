@@ -1,6 +1,6 @@
 ﻿namespace bot.kraken.Model
 {
-    public enum OrderStatus
+    public enum KrakenOrderStatus
     {
         pending = 1, // order pending book entry
         open = 2, // open order

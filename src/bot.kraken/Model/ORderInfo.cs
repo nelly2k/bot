@@ -5,7 +5,7 @@ namespace bot.kraken.Model
     public class OrderInfo
     {
         public string Id { get; set; }
-        public OrderStatus Status { get; set; }
+        public KrakenOrderStatus Status { get; set; }
 
         public string Reason { get; set; }
 

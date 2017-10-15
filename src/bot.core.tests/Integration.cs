@@ -54,7 +54,8 @@ namespace bot.core.tests
             var end = new DateTime(2017, 10, 05, 8, 00, 0);
 
             var db = new DatabaseService();
-            var config = await db.GetConfig();
+            var cofigRepo = new ConfigRepository();
+            var config = await cofigRepo.Get();
 
             var currentTime = start;
             var lines = new List<string>();

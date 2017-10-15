@@ -12,6 +12,7 @@ using bot.kraken.Model;
 using bot.model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OrderStatus = bot.model.OrderStatus;
 
 namespace bot.kraken
 {
@@ -150,7 +151,7 @@ namespace bot.kraken
 
                 var item = new OrderInfo();
                 item.Id = order.Key;
-                item.Status = Convert.ToString(details["status"]).ToEnum<OrderStatus>();
+                item.Status = Convert.ToString(details["status"]).ToEnum<KrakenOrderStatus>();
                 item.Reason = Convert.ToString(details["reason"]);
                 item.Pair = Convert.ToString(desc["pair"]);
                 item.OrderType = Convert.ToString(desc["type"]).ToEnum<OrderType>();
@@ -179,6 +180,12 @@ namespace bot.kraken
             return ToOrders(response);
         }
 
+
+        public async Task<Dictionary<string, OrderStatus>> GetOrderStatus(params string[] refs)
+        {
+            var orderInfos = await GetOrdersInfo(refs);
+            return orderInfos.ToDictionary(info => info.Id, info => info.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending);
+        }
 
         public async Task<Dictionary<string, decimal>> GetBalance()
         {

@@ -8,7 +8,7 @@ namespace bot.core
     {
         Task Add(string platform, string pair, string orderId);
         Task Remove(string platform, string orderId);
-        Task<List<string>> Get(string platform);
+        Task<Dictionary<string, string>> Get(string platform);
     }
 
     public class OrderRepository:BaseRepository, IOrderRepository
@@ -42,13 +42,13 @@ namespace bot.core
             });
         }
 
-        public async Task<List<string>> Get(string platform)
+        public async Task<Dictionary<string, string>> Get(string platform)
         {
-            var result = new List<string>();
+            var result = new Dictionary<string, string>();
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "select id from openOrder where platform = @platform";
+                    "select id from openOrder, altname where platform = @platform";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
 
@@ -56,7 +56,7 @@ namespace bot.core
 
                 while (reader.Read())
                 {
-                    result.Add(reader[0].ToString());
+                    result.Add(reader.GetString(0), reader.GetString(1));
                 }
             });
 

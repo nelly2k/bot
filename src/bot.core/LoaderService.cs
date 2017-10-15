@@ -16,14 +16,16 @@ namespace bot.core
         private readonly IExchangeClient[] _clients;
         private readonly IConnectivityService _connectivityService;
         private readonly IEventRepository _eventRepository;
+        private readonly IConfigRepository _configRepository;
 
         public LoaderService(IDatabaseService databaseService, IExchangeClient[] clients, IConnectivityService connectivityService,
-            IEventRepository eventRepository)
+            IEventRepository eventRepository,IConfigRepository configRepository)
         {
             _databaseService = databaseService;
             _clients = clients;
             _connectivityService = connectivityService;
             _eventRepository = eventRepository;
+            _configRepository = configRepository;
         }
 
         public async Task<Config> Load()
@@ -34,7 +36,7 @@ namespace bot.core
             }
             catch (Exception)
             {
-                var config = await _databaseService.GetConfig();
+                var config = await _configRepository.Get();
                 config.LoadIntervalMinutes = 10;
                 return config;
             }
@@ -56,7 +58,7 @@ namespace bot.core
                 }
             }
 
-            return await _databaseService.GetConfig();
+            return await _configRepository.Get();
         }
     }
 }

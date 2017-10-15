@@ -56,6 +56,7 @@
     <Compile Include="BalanceRepository.cs" />
     <Compile Include="BalanceService.cs" />
     <Compile Include="BaseRepository.cs" />
+    <Compile Include="ConfigRepository.cs" />
     <Compile Include="ConnectivityService.cs" />
     <Compile Include="DateTimeService.cs" />
     <Compile Include="EventRepository.cs" />

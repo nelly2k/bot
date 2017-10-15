@@ -83,8 +83,8 @@ namespace bot.kraken.test
 
         private async Task<Config> GetConfig()
         {
-            var db = new DatabaseService();
-            return await db.GetConfig();
+            var db = new ConfigRepository();
+            return await db.Get();
         }
 
         private async Task<KrakenClientService> Client()
