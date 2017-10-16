@@ -17,15 +17,17 @@ namespace bot.core
         private readonly IConnectivityService _connectivityService;
         private readonly IEventRepository _eventRepository;
         private readonly IConfigRepository _configRepository;
+        private readonly ILogRepository _logRepository;
 
         public LoaderService(IDatabaseService databaseService, IExchangeClient[] clients, IConnectivityService connectivityService,
-            IEventRepository eventRepository,IConfigRepository configRepository)
+            IEventRepository eventRepository,IConfigRepository configRepository, ILogRepository logRepository)
         {
             _databaseService = databaseService;
             _clients = clients;
             _connectivityService = connectivityService;
             _eventRepository = eventRepository;
             _configRepository = configRepository;
+            _logRepository = logRepository;
         }
 
         public async Task<Config> Load()
@@ -53,8 +55,8 @@ namespace bot.core
                 }
                 catch (Exception e)
                 {
-                    await _databaseService.Log(client.Platform, $"Error {eventName}", e.Message);
-                    await _databaseService.Log(client.Platform, $"Error {eventName}", e.StackTrace);
+                    await _logRepository.Log(client.Platform, $"Error {eventName}", e.Message);
+                    await _logRepository.Log(client.Platform, $"Error {eventName}", e.StackTrace);
                 }
             }
 

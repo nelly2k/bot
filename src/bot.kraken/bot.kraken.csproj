@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Castle.Core">
+      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -52,8 +56,8 @@
     <Compile Include="KrakenService.cs" />
     <Compile Include="Model\Asset.cs" />
     <Compile Include="Model\AssetPair.cs" />
+    <Compile Include="Model\KrakenOrderStatus.cs" />
     <Compile Include="Model\ORderInfo.cs" />
-    <Compile Include="Model\OrderStatus.cs" />
     <Compile Include="Model\KrakenResponse.cs" />
     <Compile Include="Model\OrderPriceType.cs" />
     <Compile Include="Model\OrderType.cs" />

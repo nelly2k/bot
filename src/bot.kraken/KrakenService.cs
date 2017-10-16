@@ -33,16 +33,15 @@ namespace bot.kraken
 
     public class KrakenClientService : IKrakenClientService
     {
-        private readonly IApiCredentials _credentials;
+        private readonly Config _config;
 
         private const string VERSION = "0";
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
-
-
+        
         public KrakenClientService(Config config)
         {
-            _credentials = config;
+            _config = config;
         }
 
         public async Task<ServerTime> GetServerTime()
@@ -122,7 +121,6 @@ namespace bot.kraken
                 Console.WriteLine(o.Key);
                 Console.WriteLine(o.Value);
             }
-            
         }
 
         public async Task<List<OrderInfo>> GetClosedOrders()
@@ -180,11 +178,27 @@ namespace bot.kraken
             return ToOrders(response);
         }
 
-
-        public async Task<Dictionary<string, OrderStatus>> GetOrderStatus(params string[] refs)
+        public async Task<List<Order>> GetOrders(params string[] refs)
         {
             var orderInfos = await GetOrdersInfo(refs);
-            return orderInfos.ToDictionary(info => info.Id, info => info.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending);
+            return orderInfos.Select(x => new Order
+            {
+                Id = x.Id,
+                OrderStatus = x.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending,
+                Volume = x.Volume,
+                Price = x.Price,
+                Pair = x.Pair
+            }).ToList();
+        }
+
+        public async Task<decimal> GetBaseCurrencyBalance()
+        {
+            var balance = await GetBalance();
+            if (balance.ContainsKey(_config.BaseCurrency))
+            {
+                return balance[_config.BaseCurrency];
+            }
+            return decimal.Zero;
         }
 
         public async Task<Dictionary<string, decimal>> GetBalance()
@@ -207,7 +221,7 @@ namespace bot.kraken
 
         public async Task<TResult> CallPrivate<TResult>(string url, Dictionary<string, string> paramPairs = null)
         {
-            if (_credentials == null)
+            if (_config == null)
             {
                 throw new CredentialsInvalidException();
             }
@@ -219,7 +233,7 @@ namespace bot.kraken
 
             var content = new StringContent(props, Encoding.UTF8, "application/x-www-form-urlencoded");
 
-            client.DefaultRequestHeaders.Add("API-Key", _credentials.Key);
+            client.DefaultRequestHeaders.Add("API-Key", _config.Key);
             client.DefaultRequestHeaders.Add("API-Sign", Signature(nonce, props, uri));
 
             var response = await client.PostAsync(uri, content);
@@ -233,7 +247,7 @@ namespace bot.kraken
         {
             var base64DecodedSecred =
                 Convert.FromBase64String(
-                   _credentials.Secret);
+                   _config.Secret);
 
             var np = nonce + Convert.ToChar(0) + props;
 

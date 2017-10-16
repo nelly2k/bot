@@ -24,7 +24,8 @@ namespace bot.core
             {"analyse_rsi_ema_periods", (c, v) => c.AnalyseRsiEmaPeriods = Convert.ToInt32(v)},
             {"analyse_rsi_low", (c, v) => c.AnalyseRsiLow = Convert.ToInt32(v)},
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
-            {"min_buy_usd", (c, v) => c.MinBuyUsd = Convert.ToInt32(v)},
+            {"min_buy_usd", (c, v) => c.MinBuyBaseCurrency = Convert.ToInt32(v)},
+            {"base_currency", (c, v) => c.BaseCurrency = v.ToString()},
             {"pair_percent", (c, v) =>
                 {
                     var p = v.ToString().Split('|');

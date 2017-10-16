@@ -51,6 +51,7 @@ insert into config values ('kraken', 'api_secret','')
 insert into config values ('kraken', 'max_missed_sells',3)
 insert into config values ('kraken', 'pair_percent','XETHZUSD|60')
 insert into config values ('kraken', 'min_buy_usd','2')
+insert into config values ('kraken', 'base_currency','USD')
 
 
 create table log(

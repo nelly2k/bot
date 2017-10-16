@@ -8,6 +8,8 @@ namespace bot.model
         string Platform { get; }
         Task<SinceResponse<ITrade>> GetTrades(string lastId = null, params string[] pairs);
 
-        Task<Dictionary<string, OrderStatus>> GetOrderStatus(params string[] refs);
+        Task<List<Order>> GetOrders(params string[] refs);
+
+        Task<decimal> GetBaseCurrencyBalance();
     }
 }

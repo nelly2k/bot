@@ -11,7 +11,6 @@ namespace bot.core
     public interface IDatabaseService:IService
     {
         Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
-        Task Log(string platform, string status, string what);
         Task SaveTrades(List<ITrade> trades);
     }
 

@@ -60,7 +60,9 @@
     <Compile Include="ConnectivityService.cs" />
     <Compile Include="DateTimeService.cs" />
     <Compile Include="EventRepository.cs" />
+    <Compile Include="LogRepository.cs" />
     <Compile Include="OrderRepository.cs" />
+    <Compile Include="OrderService.cs" />
     <Compile Include="TradeService.cs" />
     <Compile Include="DatabaseService.cs" />
     <Compile Include="Extensions\AnalysisExtensions.cs" />

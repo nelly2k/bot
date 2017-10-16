@@ -47,6 +47,8 @@
     <Compile Include="IExchangeClient.cs" />
     <Compile Include="IService.cs" />
     <Compile Include="ITrade.cs" />
+    <Compile Include="Order.cs" />
+    <Compile Include="OrderStatus.cs" />
     <Compile Include="PriceType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SinceResponse.cs" />
