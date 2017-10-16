@@ -11,12 +11,13 @@ namespace bot.core.trading
         private static TradeService _tradeService;
         private static DatabaseService _db;
         private static Timer _timer;
+        private static ConfigRepository _configRepository;
 
         static void Main(string[] args)
         {
           
             _db = new DatabaseService();
-
+            _configRepository = new ConfigRepository();
             _timer = new Timer(3 * 60 * 1000);
             _timer.Elapsed += Timer_Elapsed;
             _timer.AutoReset = true;
@@ -49,7 +50,7 @@ namespace bot.core.trading
 
         static async Task<Config> RunAsync()
         {
-            var config = await _db.GetConfig();
+            var config = await _configRepository.Get();
             await _tradeService.SetStatus(config).ContinueWith(r =>
             {
                 if (r.IsFaulted && r.Exception != null)

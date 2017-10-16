@@ -85,5 +85,14 @@ namespace bot.core.tests
                     }
                 });
         }
+
+        [Test]
+        public async Task FindCurrentBuyPrice()
+        {
+            var db = new DatabaseService();
+            var dt = DateTime.Now.AddMinutes(-30);
+            var trades = await db.LoadTrades("XETHZUSD", dt);
+            var grouped = trades.GroupAll(10, GroupBy.Minute);
+        }
     }
 }

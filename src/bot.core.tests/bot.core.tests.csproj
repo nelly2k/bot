@@ -131,6 +131,7 @@
     <Compile Include="WhenAnalysingMacd.cs" />
     <Compile Include="WhenCalcCurrencyAmount.cs" />
     <Compile Include="WhenCalcMovingAverages.cs" />
+    <Compile Include="WhenFetchingConfig.cs" />
     <Compile Include="WhenGrouping.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WhenManagingBalance.cs" />

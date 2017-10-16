@@ -5,12 +5,10 @@ namespace bot.core.tests
 {
     public class WhenCalcCurrencyAmount
     {
-        private TradeService core;
+        private MoneyService core;
         public void Setup()
         {
-            var dbService = Substitute.For<IDatabaseService>();
-            var eventSubstitute = Substitute.For<IEventRepository>();
-            core = new TradeService(dbService, new DateTimeService(), eventSubstitute);
+            core = new MoneyService();
         }
         
         [Test]

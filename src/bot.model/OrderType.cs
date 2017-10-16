@@ -1,4 +1,4 @@
-﻿namespace bot.kraken.Model
+﻿namespace bot.model
 {
     public enum OrderType
     {

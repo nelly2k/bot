@@ -89,7 +89,8 @@ namespace bot.kraken.test
 
         private async Task<KrakenClientService> Client()
         {
-            return new KrakenClientService(await GetConfig());
+            var config = await GetConfig();
+            return new KrakenClientService(config);
         }
 
         [Test]
@@ -123,7 +124,7 @@ namespace bot.kraken.test
         [Test]
         public async Task Sell()
         {
-            await (await Client()).AddOrder(OrderType.sell, 0.04m);
+            var result =await (await Client()).AddOrder(OrderType.sell, 0.08m);
         }
 
 
@@ -141,7 +142,7 @@ namespace bot.kraken.test
         [Test]
         public async  Task GetOrder()
         {
-            var result = await (await Client()).GetOrdersInfo("ODZDYQ-FEQJZ-EHJRYP");
+            var result = await (await Client()).GetOrdersInfo("O5YA6T-IXSJS-3GPWKN");
 
             Assert.That(result, Is.Not.Null);
         }

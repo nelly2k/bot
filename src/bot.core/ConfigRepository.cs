@@ -43,7 +43,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText = @"select name, value from config where platform=@platform";
-                cmd.Parameters.AddWithValue("@platform", "platform");
+                cmd.Parameters.AddWithValue("@platform", platform);
                 var reader = await cmd.ExecuteReaderAsync();
                 while (reader.Read())
                 {

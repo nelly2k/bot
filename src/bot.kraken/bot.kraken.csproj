@@ -60,7 +60,6 @@
     <Compile Include="Model\ORderInfo.cs" />
     <Compile Include="Model\KrakenResponse.cs" />
     <Compile Include="Model\OrderPriceType.cs" />
-    <Compile Include="Model\OrderType.cs" />
     <Compile Include="Model\ServerTime.cs" />
     <Compile Include="Model\SubmitOrder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

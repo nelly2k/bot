@@ -1,4 +1,5 @@
 ﻿using System;
+using bot.model;
 
 namespace bot.kraken.Model
 {

@@ -16,12 +16,11 @@ using OrderStatus = bot.model.OrderStatus;
 
 namespace bot.kraken
 {
-    public interface IKrakenClientService:IExchangeClient
+    public interface IKrakenClientService : IExchangeClient
     {
         Task<ServerTime> GetServerTime();
         Task<Dictionary<string, Asset>> GetAssetInfo(string assetClass = "currency", params string[] assets);
         Task<Dictionary<string, AssetPair>> GetTradableAssetPairs(params string[] pairs);
-        Task AddOrder(OrderType orderType, decimal volume);
         Task<List<OrderInfo>> GetClosedOrders();
         List<OrderInfo> ToOrders(Dictionary<string, object> orders);
         Task<List<OrderInfo>> GetOrdersInfo(params string[] orderIds);
@@ -38,7 +37,7 @@ namespace bot.kraken
         private const string VERSION = "0";
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
-        
+
         public KrakenClientService(Config config)
         {
             _config = config;
@@ -76,8 +75,8 @@ namespace bot.kraken
 
             var response = await CallPublic<Dictionary<string, object>>("Trades", paramPairs);
 
-            var result = new SinceResponse<ITrade> {Results = new List<ITrade>()};
-            if (response==null || !response.Any()) return result;
+            var result = new SinceResponse<ITrade> { Results = new List<ITrade>() };
+            if (response == null || !response.Any()) return result;
 
             result.LastId = Convert.ToString(response.Last().Value);
             if (response.Count <= 1) return result;
@@ -107,7 +106,7 @@ namespace bot.kraken
             return result;
         }
 
-        public async Task AddOrder(OrderType orderType, decimal volume)
+        public async Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair = "ETHUSD")
         {
             var response = await CallPrivate<Dictionary<string, object>>("AddOrder", new Dictionary<string, string>
             {
@@ -116,11 +115,9 @@ namespace bot.kraken
                 {"ordertype","market"},
                 {"volume",volume.ToString(CultureInfo.InvariantCulture) }
             });
-            foreach (var o in response)
-            {
-                Console.WriteLine(o.Key);
-                Console.WriteLine(o.Value);
-            }
+
+            var txid = response["txid"];
+            return JsonConvert.DeserializeObject<List<string>>(txid.ToString());
         }
 
         public async Task<List<OrderInfo>> GetClosedOrders()
@@ -167,7 +164,7 @@ namespace bot.kraken
             }
             return result;
         }
-        
+
         public async Task<List<OrderInfo>> GetOrdersInfo(params string[] orderIds)
         {
             var paramPairs = new Dictionary<string, string>()
@@ -331,7 +328,7 @@ namespace bot.kraken
             return builder.Uri;
         }
 
-       
+
     }
 }
 

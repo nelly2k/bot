@@ -11,15 +11,17 @@ namespace bot.core
         private readonly IBalanceRepository _balanceRepository;
         private readonly Config _config;
         private readonly ILogRepository _logRepository;
+        private readonly IMoneyService _moneyService;
 
         public OrderService(IOrderRepository orderRepository, IExchangeClient[] clients, IBalanceRepository balanceRepository, Config config,
-            ILogRepository logRepository)
+            ILogRepository logRepository, IMoneyService moneyService)
         {
             _orderRepository = orderRepository;
             _clients = clients;
             _balanceRepository = balanceRepository;
             _config = config;
             _logRepository = logRepository;
+            _moneyService = moneyService;
         }
 
         public async Task CheckOpenOrders()
@@ -42,18 +44,34 @@ namespace bot.core
             }
         }
 
-        public async Task Buy(IExchangeClient client, string pair)
+        public async Task Buy(IExchangeClient client, string pair, decimal price)
         {
             var currentBalance = await client.GetBaseCurrencyBalance();
             var moneyToSpend = currentBalance / 100m * (decimal) _config.PairPercent[pair];
             if (moneyToSpend < _config.MinBuyBaseCurrency)
             {
-                await _logRepository.Log(client.Platform, "insufficient fund",
-                    $"[Base currency balance:{currentBalance}]");
+                await _logRepository.Log(client.Platform, "trade error",
+                    $"[Insufficient funds. Base currency balance:{currentBalance}]");
                 return;
             }
 
-            client
+            var transformResult = _moneyService.Transform(moneyToSpend, price, 0.26m);
+
+            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount);
+            await _logRepository.Log(client.Platform, "Trade",
+                $"Added buy order for [pair:{pair}] [volume:{transformResult.TargetCurrencyAmount}]");
+
+            foreach (var orderId in orderIds)
+            {
+                await _orderRepository.Add(client.Platform, pair, orderId);
+            }
+        }
+
+        public async Task Sell(IExchangeClient client, string pair, decimal price)
+        {
+            var balanceItems = await _balanceRepository.Get(client.Platform, pair);
+            var volume = balanceItems.Sum(x => x.Volume);
+
 
         }
     }
