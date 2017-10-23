@@ -12,17 +12,17 @@ namespace bot.core
     public class LoaderService : ILoaderService
     {
         private const string Pair = "ETHUSD";
-        private readonly IDatabaseService _databaseService;
+        private readonly ITradeRepository _tradeRepository;
         private readonly IExchangeClient[] _clients;
         private readonly IConnectivityService _connectivityService;
         private readonly IEventRepository _eventRepository;
         private readonly IConfigRepository _configRepository;
         private readonly ILogRepository _logRepository;
 
-        public LoaderService(IDatabaseService databaseService, IExchangeClient[] clients, IConnectivityService connectivityService,
+        public LoaderService(ITradeRepository tradeRepository, IExchangeClient[] clients, IConnectivityService connectivityService,
             IEventRepository eventRepository,IConfigRepository configRepository, ILogRepository logRepository)
         {
-            _databaseService = databaseService;
+            _tradeRepository = tradeRepository;
             _clients = clients;
             _connectivityService = connectivityService;
             _eventRepository = eventRepository;
@@ -50,7 +50,7 @@ namespace bot.core
                 {            
                     var lastId = await _eventRepository.GetLastEventValue(client.Platform, eventName);
                     var getTradesReasult = await client.GetTrades(lastId, Pair);
-                    await _databaseService.SaveTrades(getTradesReasult.Results);
+                    await _tradeRepository.SaveTrades(getTradesReasult.Results);
                     await _eventRepository.UpdateLastEvent(client.Platform, eventName, getTradesReasult.LastId);
                 }
                 catch (Exception e)

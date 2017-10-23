@@ -4,7 +4,15 @@ using bot.model;
 
 namespace bot.core
 {
-    public class OrderService
+    public interface IOrderService
+    {
+        Task CheckOpenOrders();
+        Task CheckOpenOrders(IExchangeClient client);
+        Task Buy(IExchangeClient client, string pair, decimal price);
+        Task Sell(IExchangeClient client, string pair, decimal price);
+    }
+
+    public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IExchangeClient[] _clients;
@@ -70,8 +78,39 @@ namespace bot.core
         public async Task Sell(IExchangeClient client, string pair, decimal price)
         {
             var balanceItems = await _balanceRepository.Get(client.Platform, pair);
-            var volume = balanceItems.Sum(x => x.Volume);
 
+            decimal volume = decimal.Zero;
+
+            foreach (var balanceItem in balanceItems)
+            {
+                var boughtPrice = balanceItem.Volume * balanceItem.Price + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.16m);
+                var sellPrice = balanceItem.Volume * price +
+                                _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
+
+
+                if (boughtPrice < sellPrice)
+                {
+                    volume += balanceItem.Volume;
+                }
+                else
+                {
+                    await _balanceRepository.SetNotSold(client.Platform, pair);
+                }
+            }
+
+            if (volume == decimal.Zero)
+            {
+                return;
+            }
+
+            var orderIds = await client.AddOrder(OrderType.sell, volume);
+            await _logRepository.Log(client.Platform, "Trade",
+                $"Added sell order for [pair:{pair}] [volume:{volume}]");
+
+            foreach (var orderId in orderIds)
+            {
+                await _orderRepository.Add(client.Platform, pair, orderId);
+            }
 
         }
     }

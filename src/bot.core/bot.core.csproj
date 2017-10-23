@@ -65,7 +65,7 @@
     <Compile Include="OrderRepository.cs" />
     <Compile Include="OrderService.cs" />
     <Compile Include="TradeService.cs" />
-    <Compile Include="DatabaseService.cs" />
+    <Compile Include="TradeRepository.cs" />
     <Compile Include="Extensions\AnalysisExtensions.cs" />
     <Compile Include="Extensions\CalculationExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />

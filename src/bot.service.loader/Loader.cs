@@ -27,7 +27,7 @@ namespace bot.service.loader
         {
             _container = new UnityContainer();
             _container.RegisterInstance(new Config());
-            _container.RegisterAssembleyWith<IDatabaseService>();
+            _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
         }

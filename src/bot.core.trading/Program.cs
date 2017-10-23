@@ -9,14 +9,14 @@ namespace bot.core.trading
     class Program
     {
         private static TradeService _tradeService;
-        private static DatabaseService _db;
+        private static TradeRepository _db;
         private static Timer _timer;
         private static ConfigRepository _configRepository;
 
         static void Main(string[] args)
         {
           
-            _db = new DatabaseService();
+            _db = new TradeRepository();
             _configRepository = new ConfigRepository();
             _timer = new Timer(3 * 60 * 1000);
             _timer.Elapsed += Timer_Elapsed;

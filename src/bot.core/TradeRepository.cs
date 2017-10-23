@@ -8,17 +8,17 @@ using bot.model;
 
 namespace bot.core
 {
-    public interface IDatabaseService:IService
+    public interface ITradeRepository:IService
     {
         Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
         Task SaveTrades(List<ITrade> trades);
     }
 
-    public class DatabaseService : IDatabaseService
+    public class TradeRepository : ITradeRepository
     {
         private readonly string _connectionString;
 
-        public DatabaseService()
+        public TradeRepository()
         {
             _connectionString=ConfigurationManager.AppSettings["db"];
         }
@@ -65,27 +65,6 @@ namespace bot.core
                     return result;
                 }
 
-            }
-        }
-
-        public async Task Log(string platform, string status, string what)
-        {
-            using (var con = new SqlConnection(_connectionString))
-            {
-                var text = @"INSERT INTO [dbo].[log]
-           ([platform]
-           ,[status]
-           ,[event])
-     VALUES (@platform,@status,@event)";
-                con.Open();
-                using (var com = new SqlCommand(text, con))
-                {
-                    com.Parameters.AddWithValue("@platform", "kraken");
-                    com.Parameters.AddWithValue("@status", status);
-                    com.Parameters.AddWithValue("@event", what);
-                    await com.ExecuteNonQueryAsync();
-                    con.Close();
-                }
             }
         }
 

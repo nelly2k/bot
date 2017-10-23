@@ -13,21 +13,21 @@ namespace bot.core.tests
 {
     public class Integration
     {
-        private DatabaseService _databaseService;
+        private TradeRepository _tradeRepository;
         private DateTime _dt;
         private const string AltName = "XETHZUSD";
 
         [SetUp]
         public void Setup()
         {
-            _databaseService = new DatabaseService();
+            _tradeRepository = new TradeRepository();
             _dt = DateTime.Now.AddHours(-15);
         }
 
         [Test]
         public async Task AllTogether()
         {
-            var trades = await _databaseService.LoadTrades(AltName, _dt);
+            var trades = await _tradeRepository.LoadTrades(AltName, _dt);
             var grouped = trades.GroupAll(4, GroupBy.Minute).ToList();
             var macd = grouped.Macd(26, 12, 9).ToList();
             var rsi = grouped.RelativeStrengthIndex(14);
@@ -53,7 +53,7 @@ namespace bot.core.tests
             var start = new DateTime(2017, 09, 29, 15, 0, 0);
             var end = new DateTime(2017, 10, 05, 8, 00, 0);
 
-            var db = new DatabaseService();
+            var db = new TradeRepository();
             var cofigRepo = new ConfigRepository();
             var config = await cofigRepo.Get();
 
@@ -93,7 +93,7 @@ namespace bot.core.tests
         //{
         //    var startFall = new DateTime(2017, 10, 07, 00, 0, 0);
         //    var end = new DateTime(2017, 10, 08, 8, 00, 0);
-        //    var db = new DatabaseService();
+        //    var db = new TradeRepository();
         //    var config = await db.GetConfig();
 
         //    var result = await RunConfigTrail(config, 65m, startFall, end);
@@ -179,7 +179,7 @@ namespace bot.core.tests
 
         //private async Task<ConfigurationTrailResult> RunConfigTrail(Config config, decimal usd, DateTime start, DateTime end)
         //{
-        //    var db = new DatabaseService();
+        //    var db = new TradeRepository();
         //    var result = new ConfigurationTrailResult();
         //    var core = new TradeService();
         //    var currentTime = start;
@@ -264,7 +264,7 @@ namespace bot.core.tests
 
             var start = end.AddHours(-8);
 
-            var trades = await _databaseService.LoadTrades(AltName, start, end);
+            var trades = await _tradeRepository.LoadTrades(AltName, start, end);
             var grouped = trades.GroupAll(3, GroupBy.Minute).ToList();
             var macd = grouped.Macd(26, 12, 9).ToList();
             var rsi = grouped.RelativeStrengthIndex(14).ToList();

@@ -6,6 +6,7 @@ namespace bot.core
     public interface IMoneyService:IService
     {
         CurrencyAmountResult Transform(decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent, FeeSource feeSource = FeeSource.Base);
+        decimal FeeToPay(decimal volume, decimal price, decimal feePercent);
     }
 
     public class MoneyService : IMoneyService
@@ -30,7 +31,24 @@ namespace bot.core
 
             return result;
         }
+        
+        public decimal FeeToPay(decimal volume, decimal price, decimal feePercent)
+        {
+            return Math.Round(volume * price * feePercent / 100,2);
+        }
+    }
 
+    public class CurrencyAmountResult
+    {
+        public decimal Fee { get; set; }
+        public decimal TargetCurrencyAmount { get; set; }
+        public decimal BaseCurrencyRest { get; set; }
+        public TradeStatus TradeStatus { get; set; }
+    }
 
+    public enum FeeSource
+    {
+        Base,
+        Target
     }
 }

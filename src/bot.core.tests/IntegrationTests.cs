@@ -15,7 +15,6 @@ namespace bot.core.tests
     {
         private UnityContainer _container;
         private IEventRepository _eventRepository;
-        private IKrakenClientService _krakenClientService;
 
         private const string pair = "XETHZUSD";
 
@@ -23,14 +22,20 @@ namespace bot.core.tests
         public void Setup()
         {
             _container = new UnityContainer();
+            _container.RegisterType<ITradeRepository, TradeRepository>();
+            _container.RegisterType<IOrderService, OrderService>();
+            _container.RegisterType<IMoneyService, MoneyService>();
             _container.RegisterInstance(new Config());
-            _container.RegisterAssembleyWith<IDatabaseService>();
-            _krakenClientService = Substitute.For<IKrakenClientService>();
-            _container.RegisterInstance<IExchangeClient>("kraken", _krakenClientService);
-            _container.RegisterDateTime();
 
-            _container.RegisterInstance<IDatabaseService>(new DatabaseService());
-            _eventRepository = NSubstitute.Substitute.For<IEventRepository>();
+            _container.RegisterInstance(Substitute.For<IDateTime>());
+            _container.RegisterInstance(Substitute.For<IEventRepository>());
+            _container.RegisterInstance(Substitute.For<IOrderRepository>());
+            _container.RegisterInstance(Substitute.For<IBalanceRepository>());
+            _container.RegisterInstance(Substitute.For<ILogRepository>());
+            _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
+            
+
+            _eventRepository = _container.Resolve<IEventRepository>();
         }
 
         [Test]
@@ -53,26 +58,6 @@ namespace bot.core.tests
             Assert.That(currentStatus, Is.EqualTo(TradeStatus.Buy));
         }
 
-        [Test]
-        public void Trade()
-        {
-            
-            var currentStatus = TradeStatus.Unknown;
-            CatchStatusChanges(currentStatus,newStatus=> currentStatus = newStatus);
-
-            var currentBalance = 65m;
-
-            _krakenClientService.GetBalance().Returns(new Dictionary<string, decimal>{{pair, currentBalance}});
-
-            var config = new Config();
-            config.PairPercent.Add("XETHZUSD",60);
-            var mypercent = config.PairPercent["XETHZUSD"];
-
-            var moneyToSpend = currentBalance / 100m * (decimal)mypercent;
-
-
-        }
-
         private void CatchStatusChanges(TradeStatus currentStatus, Action<TradeStatus> setAction)
         {
             _eventRepository.When(x => x.UpdateLastEvent(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
@@ -86,13 +71,69 @@ namespace bot.core.tests
                 });
         }
 
-        [Test]
-        public async Task FindCurrentBuyPrice()
+        private void SetDate(DateTime dt)
         {
-            var db = new DatabaseService();
-            var dt = DateTime.Now.AddMinutes(-30);
-            var trades = await db.LoadTrades("XETHZUSD", dt);
-            var grouped = trades.GroupAll(10, GroupBy.Minute);
+            var ser = _container.Resolve<IDateTime>();
+            ser.Now.Returns(dt);
+        }
+
+        private void SetupOrderService(Action<decimal> setBuyPrice, Action<decimal> setSellPrice)
+        {
+            var ser = _container.Resolve<IOrderService>();
+
+            ser.When(x => x.Buy(Arg.Any<IExchangeClient>(), Arg.Any<string>(), Arg.Any<decimal>()))
+                .Do(x =>
+                {
+                    setBuyPrice?.Invoke(Convert.ToDecimal(x.Args().Last()));
+                });
+
+            ser.When(x => x.Sell(Arg.Any<IExchangeClient>(), Arg.Any<string>(), Arg.Any<decimal>()))
+                .Do(x =>
+                {
+                    setSellPrice?.Invoke(Convert.ToDecimal(x.Args().Last()));
+                });
+        }
+
+        [Test]
+        public void SetDateWorks()
+        {
+            SetDate(new DateTime(2015,05,10));
+            Assert.That(_container.Resolve<IDateTime>().Now, Is.EqualTo(new DateTime(2015, 05, 10)));
+        }
+
+        [Test]
+        public void SetOrderService_Buy()
+        {
+            var price = decimal.Zero;
+            SetupOrderService(x=>price = x,null);
+            var ser = _container.Resolve<IOrderService>();
+            ser.Buy(Substitute.For<IExchangeClient>(), "blah", 12.12m);
+            Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
+        }
+
+        [Test]
+        public void SetOrderService_Sell()
+        {
+            var price = decimal.Zero;
+            SetupOrderService(null, x => price = x);
+            var ser = _container.Resolve<IOrderService>();
+            ser.Sell(Substitute.For<IExchangeClient>(), "blah", 12.12m);
+            Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
+        }
+
+        [Test]
+        public async Task TradeSimulator(DateTime start, DateTime end)
+        {
+            var currentStatus = TradeStatus.Unknown;
+            CatchStatusChanges(currentStatus, newStatus => currentStatus = newStatus);
+            var buyPrice = decimal.Zero;
+            var sellPrice = decimal.Zero;
+
+            SetupOrderService(x=>sellPrice = x, x=>buyPrice = x);
+            
+            var current
+
+
         }
     }
 }
