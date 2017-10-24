@@ -110,9 +110,24 @@ namespace bot.kraken
         {
             var response = await CallPrivate<Dictionary<string, object>>("AddOrder", new Dictionary<string, string>
             {
-                {"pair","ETHUSD"},
+                {"pair",pair},
                 {"type",orderType.ToString()},
                 {"ordertype","market"},
+                {"volume",volume.ToString(CultureInfo.InvariantCulture) }
+            });
+
+            var txid = response["txid"];
+            return JsonConvert.DeserializeObject<List<string>>(txid.ToString());
+        }
+
+        public async Task<List<string>> AddOrder(OrderType orderType, decimal volume, decimal price, string pair = "ETHUSD")
+        {
+            var response = await CallPrivate<Dictionary<string, object>>("AddOrder", new Dictionary<string, string>
+            {
+                {"pair",pair},
+                {"type",orderType.ToString()},
+                {"ordertype","limit"},
+                {"price",price.ToString()},
                 {"volume",volume.ToString(CultureInfo.InvariantCulture) }
             });
 

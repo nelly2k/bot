@@ -23,9 +23,6 @@ namespace bot.kraken
             return dic;
         }
 
-        public static  TEnum ToEnum<TEnum>(this string str)
-        {
-            return (TEnum)Enum.Parse(typeof(TEnum), str);
-        }
+       
     }
 }

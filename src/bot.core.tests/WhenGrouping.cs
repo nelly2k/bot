@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 using bot.core.Extensions;
-using bot.kraken;
-using bot.kraken.Model;
 using bot.model;
 using FizzWare.NBuilder;
 using NUnit.Framework;

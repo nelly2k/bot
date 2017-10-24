@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using bot.core.Extensions;
-using bot.kraken;
 using bot.model;
 using Microsoft.Practices.Unity;
 using NSubstitute;
@@ -15,6 +13,7 @@ namespace bot.core.tests
     {
         private UnityContainer _container;
         private IEventRepository _eventRepository;
+        private IExchangeClient _exchangeClient;
 
         private const string pair = "XETHZUSD";
 
@@ -25,6 +24,7 @@ namespace bot.core.tests
             _container.RegisterType<ITradeRepository, TradeRepository>();
             _container.RegisterType<IOrderService, OrderService>();
             _container.RegisterType<IMoneyService, MoneyService>();
+            _container.RegisterType<ITradeService, TradeService>();
             _container.RegisterInstance(new Config());
 
             _container.RegisterInstance(Substitute.For<IDateTime>());
@@ -36,6 +36,9 @@ namespace bot.core.tests
             
 
             _eventRepository = _container.Resolve<IEventRepository>();
+
+            var clients = _container.ResolveAll<IExchangeClient>();
+            _exchangeClient = clients.First();
         }
 
         [Test]
@@ -51,14 +54,14 @@ namespace bot.core.tests
         {
             var currentStatus = TradeStatus.Unknown;
 
-            CatchStatusChanges(currentStatus, newStatus => currentStatus = newStatus);
+            SetupStatus(currentStatus, newStatus => currentStatus = newStatus);
             _eventRepository.UpdateLastEvent("", "", "Sell");
             Assert.That(currentStatus,Is.EqualTo(TradeStatus.Sell));
             _eventRepository.UpdateLastEvent("", "", "Buy");
             Assert.That(currentStatus, Is.EqualTo(TradeStatus.Buy));
         }
 
-        private void CatchStatusChanges(TradeStatus currentStatus, Action<TradeStatus> setAction)
+        private void SetupStatus(TradeStatus currentStatus, Action<TradeStatus> setAction)
         {
             _eventRepository.When(x => x.UpdateLastEvent(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()))
                 .Do(x =>
@@ -71,6 +74,16 @@ namespace bot.core.tests
                 });
         }
 
+        private void SetCurrentStatus(TradeStatus status)
+        {
+            _eventRepository.GetLastEventValue(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(status.ToString()));
+        }
+
+        private void SetConfig()
+        {
+            var config = _container.Resolve<Config>();
+            config.PairPercent.Add(pair,60);
+        }
         private void SetDate(DateTime dt)
         {
             var ser = _container.Resolve<IDateTime>();
@@ -92,6 +105,28 @@ namespace bot.core.tests
                 {
                     setSellPrice?.Invoke(Convert.ToDecimal(x.Args().Last()));
                 });
+        }
+
+        private void SetupExchangeService(OrderType type, Action<decimal,decimal> setVolumePrice)
+        {
+            var ser = _container.Resolve<IExchangeClient>();
+
+            ser.When(x=>x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<decimal>()))
+                .Do(x =>
+                {
+                    setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[2]));
+                });
+        }
+
+        [Test]
+        public async Task StatusIsSet()
+        {
+            var tradeSer = _container.Resolve<ITradeService>();
+            SetCurrentStatus(TradeStatus.Buy);
+            Assert.That(await tradeSer.GetCurrentStatus(), Is.EqualTo(TradeStatus.Buy));
+            SetCurrentStatus(TradeStatus.Sell);
+            Assert.That(await tradeSer.GetCurrentStatus(), Is.EqualTo(TradeStatus.Sell));
+
         }
 
         [Test]
@@ -121,19 +156,71 @@ namespace bot.core.tests
             Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
         }
 
+        private void SetUsdBalance(decimal balance)
+        {
+            _exchangeClient.GetBaseCurrencyBalance().Returns(Task.FromResult(balance));
+        }
+
         [Test]
         public async Task TradeSimulator(DateTime start, DateTime end)
         {
+            var file = Write("simulator",true,"Status,ETH,USD balance");
+            SetConfig();
             var currentStatus = TradeStatus.Unknown;
-            CatchStatusChanges(currentStatus, newStatus => currentStatus = newStatus);
-            var buyPrice = decimal.Zero;
-            var sellPrice = decimal.Zero;
-
-            SetupOrderService(x=>sellPrice = x, x=>buyPrice = x);
+            var config = _container.Resolve<Config>();
+            var tradeService = _container.Resolve<ITradeService>();
             
-            var current
+            var ethBalance = decimal.Zero;
+            var usdBalance = decimal.Zero;
+            
+            SetUsdBalance(65m);
+            SetCurrentStatus(currentStatus);
+           
+            SetupExchangeService(OrderType.buy, (vol,pr) => 
+            {
+                ethBalance = ethBalance + vol;
+                usdBalance = usdBalance - ((vol * pr) + (vol * pr / 100 * 0.26m));
+                SetUsdBalance(usdBalance);
+
+            });
+
+            SetupExchangeService(OrderType.sell,  (vol, pr) =>
+            {
+                ethBalance = ethBalance - vol;
+                usdBalance = usdBalance + (vol * pr) - (vol * pr / 100 * 0.16m);
+                SetUsdBalance(usdBalance);
+            });
+
+            SetupStatus(currentStatus, newStatus =>
+            {
+                currentStatus = newStatus;
+                SetCurrentStatus(newStatus);
+                Write(file, false, $"{newStatus},{ethBalance},{usdBalance}");
+            });
+
+            var currentTime = start;
+
+            while (currentTime < end)
+            {
+                SetDate(currentTime);
+                await tradeService.Trade();
+                currentTime = currentTime.AddMinutes(config.LoadIntervalMinutes);
+            }
+        }
 
 
+        public string Write(string name, bool isNewFile, params string[] lines)
+        {
+            var filename = isNewFile ? $"h:\\{name}_{DateTime.Now:yyMMddhhmmss}.csv" : name;
+            using (var file = new System.IO.StreamWriter(filename, true))
+            {
+                foreach (var line in lines)
+                {
+                    file.WriteLine(line);
+                }
+                file.Close();
+            }
+            return filename;
         }
     }
 }

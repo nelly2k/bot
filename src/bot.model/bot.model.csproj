@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="EventConstant.cs" />
+    <Compile Include="Extentions.cs" />
     <Compile Include="IApiCredentials.cs" />
     <Compile Include="IDateTime.cs" />
     <Compile Include="IExchangeClient.cs" />

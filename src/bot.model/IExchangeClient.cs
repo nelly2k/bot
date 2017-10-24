@@ -11,7 +11,7 @@ namespace bot.model
         Task<List<Order>> GetOrders(params string[] refs);
 
         Task<decimal> GetBaseCurrencyBalance();
-
         Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair = "ETHUSD");
+        Task<List<string>> AddOrder(OrderType orderType, decimal volume, decimal price, string pair = "ETHUSD");
     }
 }
