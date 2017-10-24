@@ -51,21 +51,21 @@ namespace bot.core.trading
         static async Task<Config> RunAsync()
         {
             var config = await _configRepository.Get();
-            await _tradeService.SetStatus(config).ContinueWith(r =>
-            {
-                if (r.IsFaulted && r.Exception != null)
-                {
-                    Console.WriteLine("An exception here");
-                    Exception ex = r.Exception;
+            //await _tradeService.SetStatus(config).ContinueWith(r =>
+            //{
+            //    if (r.IsFaulted && r.Exception != null)
+            //    {
+            //        Console.WriteLine("An exception here");
+            //        Exception ex = r.Exception;
 
-                    while (ex is AggregateException && ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(ex.StackTrace);
-                }
-            });
+            //        while (ex is AggregateException && ex.InnerException != null)
+            //        {
+            //            ex = ex.InnerException;
+            //        }
+            //        Console.WriteLine(ex.Message);
+            //        Console.WriteLine(ex.StackTrace);
+            //    }
+            //});
             return config;
            
         }

@@ -11,7 +11,7 @@ namespace bot.core
     {
         Task Trade();
         Task Trade(IExchangeClient client);
-        TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, Config config);
+        TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades);
         Task<TradeStatus> GetCurrentStatus();
     }
 
@@ -52,13 +52,14 @@ namespace bot.core
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
             var trades = await _tradeRepository.LoadTrades(Pair, dt, _dateTime.Now);
             var groupedTrades = trades.GroupAll(_config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-            var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), _config);
+            var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList());
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;
             }
-
-            switch (currentStatus)
+            //TODO where is set status?
+            //Sell need to be implemented in simulator
+            switch (newStatus)
             {
                 case TradeStatus.Buy:
                 {
@@ -81,12 +82,13 @@ namespace bot.core
             return (TradeStatus)Enum.Parse(typeof(TradeStatus), currentStatusStr);
         }
 
-        public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, Config config)
+        public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades)
         {
-            var macd = groupedTrades.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).MacdAnalysis();
-            var rsiLastPeak = groupedTrades.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods).GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
+            var macd = groupedTrades.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast, _config.AnalyseMacdSignal).MacdAnalysis();
+            var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config.AnalyseRsiEmaPeriods)
+                .GetPeaks(_config.AnalyseRsiLow, _config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                 .FirstOrDefault();
-            return AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, DateTime.Now, macd, rsiLastPeak);
+            return AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak);
         }
 
 

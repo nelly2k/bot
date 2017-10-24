@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using bot.core.Extensions;
 using bot.model;
 using Microsoft.Practices.Unity;
 using NSubstitute;
@@ -33,7 +34,7 @@ namespace bot.core.tests
             _container.RegisterInstance(Substitute.For<IBalanceRepository>());
             _container.RegisterInstance(Substitute.For<ILogRepository>());
             _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
-            
+
 
             _eventRepository = _container.Resolve<IEventRepository>();
 
@@ -56,7 +57,7 @@ namespace bot.core.tests
 
             SetupStatus(currentStatus, newStatus => currentStatus = newStatus);
             _eventRepository.UpdateLastEvent("", "", "Sell");
-            Assert.That(currentStatus,Is.EqualTo(TradeStatus.Sell));
+            Assert.That(currentStatus, Is.EqualTo(TradeStatus.Sell));
             _eventRepository.UpdateLastEvent("", "", "Buy");
             Assert.That(currentStatus, Is.EqualTo(TradeStatus.Buy));
         }
@@ -79,10 +80,12 @@ namespace bot.core.tests
             _eventRepository.GetLastEventValue(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(status.ToString()));
         }
 
-        private void SetConfig()
+        private async Task SetConfig()
         {
-            var config = _container.Resolve<Config>();
-            config.PairPercent.Add(pair,60);
+            var repo = new ConfigRepository();
+            var config = await repo.Get();
+            _container.RegisterInstance<Config>(config);
+
         }
         private void SetDate(DateTime dt)
         {
@@ -107,11 +110,9 @@ namespace bot.core.tests
                 });
         }
 
-        private void SetupExchangeService(OrderType type, Action<decimal,decimal> setVolumePrice)
+        private void SetupExchangeService(OrderType type, Action<decimal, decimal> setVolumePrice)
         {
-            var ser = _container.Resolve<IExchangeClient>();
-
-            ser.When(x=>x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<decimal>()))
+            _exchangeClient.When(x => x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<decimal>()))
                 .Do(x =>
                 {
                     setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[2]));
@@ -132,7 +133,7 @@ namespace bot.core.tests
         [Test]
         public void SetDateWorks()
         {
-            SetDate(new DateTime(2015,05,10));
+            SetDate(new DateTime(2015, 05, 10));
             Assert.That(_container.Resolve<IDateTime>().Now, Is.EqualTo(new DateTime(2015, 05, 10)));
         }
 
@@ -140,7 +141,7 @@ namespace bot.core.tests
         public void SetOrderService_Buy()
         {
             var price = decimal.Zero;
-            SetupOrderService(x=>price = x,null);
+            SetupOrderService(x => price = x, null);
             var ser = _container.Resolve<IOrderService>();
             ser.Buy(Substitute.For<IExchangeClient>(), "blah", 12.12m);
             Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
@@ -161,41 +162,65 @@ namespace bot.core.tests
             _exchangeClient.GetBaseCurrencyBalance().Returns(Task.FromResult(balance));
         }
 
-        [Test]
-        public async Task TradeSimulator(DateTime start, DateTime end)
+        private void SetEthBalance(decimal volume, decimal price)
         {
-            var file = Write("simulator",true,"Status,ETH,USD balance");
-            SetConfig();
+            var balanceRepository = _container.Resolve<IBalanceRepository>();
+            balanceRepository.Get(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(
+                new List<BalanceItem>()
+                {
+                    new BalanceItem()
+                    {
+                        Volume = volume,
+                        Price = price
+
+                    }
+                }));
+        }
+
+        [Test]
+        public async Task RunSimulator()
+        {
+            var dateTime = DateTime.Now.AddHours(-10);
+            await TradeSimulator(dateTime, DateTime.Now);
+        }
+        private async Task TradeSimulator(DateTime start, DateTime end)
+        {
+            var file = Write("simulator", true, "Status,ETH,Price,USD balance");
+            await SetConfig();
             var currentStatus = TradeStatus.Unknown;
             var config = _container.Resolve<Config>();
             var tradeService = _container.Resolve<ITradeService>();
-            
+
             var ethBalance = decimal.Zero;
             var usdBalance = decimal.Zero;
-            
+            var price = decimal.Zero;
+
             SetUsdBalance(65m);
             SetCurrentStatus(currentStatus);
-           
-            SetupExchangeService(OrderType.buy, (vol,pr) => 
+
+            SetupExchangeService(OrderType.buy, (vol, pr) =>
             {
                 ethBalance = ethBalance + vol;
                 usdBalance = usdBalance - ((vol * pr) + (vol * pr / 100 * 0.26m));
                 SetUsdBalance(usdBalance);
-
+                SetEthBalance(ethBalance, pr);
+                Write(file, false, $"buy,{ethBalance},{price},{usdBalance}");
             });
 
-            SetupExchangeService(OrderType.sell,  (vol, pr) =>
-            {
-                ethBalance = ethBalance - vol;
-                usdBalance = usdBalance + (vol * pr) - (vol * pr / 100 * 0.16m);
-                SetUsdBalance(usdBalance);
-            });
+            SetupExchangeService(OrderType.sell, (vol, pr) =>
+           {
+               ethBalance = ethBalance - vol;
+               usdBalance = usdBalance + (vol * pr) - (vol * pr / 100 * 0.16m);
+               SetUsdBalance(usdBalance);
+               SetEthBalance(ethBalance, pr);
+               Write(file, false, $"sell,{ethBalance},{price},{usdBalance}");
+           });
 
             SetupStatus(currentStatus, newStatus =>
             {
                 currentStatus = newStatus;
                 SetCurrentStatus(newStatus);
-                Write(file, false, $"{newStatus},{ethBalance},{usdBalance}");
+
             });
 
             var currentTime = start;
