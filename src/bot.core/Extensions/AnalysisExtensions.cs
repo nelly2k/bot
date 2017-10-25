@@ -8,7 +8,7 @@ namespace bot.core.Extensions
     public static class AnalysisExtensions
     {
 
-        public static TradeStatus AnalyseIndeces(int treshold, DateTime now, MacdAnalysisResult macdAnalysisResult, PeakAnalysisResult lastRsiPeak)
+        public static TradeStatus AnalyseIndeces(int treshold, DateTime now, MacdAnalysisResult macdAnalysisResult, PeakAnalysisResult lastRsiPeak, TradeStatus macdSlow)
         {
             if (lastRsiPeak == null || macdAnalysisResult.CrossType == null)
             {
@@ -23,16 +23,32 @@ namespace bot.core.Extensions
                 return TradeStatus.Unknown;
             }
 
-            if (macdAnalysisResult.CrossType == CrossType.MacdRises && lastRsiPeak.PeakType == PeakType.Low)
+            if (macdAnalysisResult.CrossType == CrossType.MacdRises && lastRsiPeak.PeakType == PeakType.Low && macdSlow == TradeStatus.Buy)
             {
                 return TradeStatus.Buy;
             }
 
-            if (macdAnalysisResult.CrossType == CrossType.MacdFalls && lastRsiPeak.PeakType == PeakType.High)
+            if (macdAnalysisResult.CrossType == CrossType.MacdFalls && lastRsiPeak.PeakType == PeakType.High && macdSlow == TradeStatus.Sell)
             {
                 return TradeStatus.Sell;
             }
             
+            return TradeStatus.Unknown;
+        }
+
+        public static TradeStatus MacdSlowAnalysis(this IEnumerable<MacdResultItem> macd)
+        {
+            var last = macd.OrderByDescending(x => x.DateTime).Take(3).ToList();
+            if (last.All(x => x.Macd > x.Signal))
+            {
+                return TradeStatus.Buy;
+            }
+
+            if (last.All(x => x.Macd < x.Signal))
+            {
+                return TradeStatus.Sell;
+            }
+
             return TradeStatus.Unknown;
         }
 

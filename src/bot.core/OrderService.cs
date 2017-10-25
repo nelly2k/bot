@@ -20,9 +20,10 @@ namespace bot.core
         private readonly Config _config;
         private readonly ILogRepository _logRepository;
         private readonly IMoneyService _moneyService;
+        private readonly INotSoldRepository _notSoldRepository;
 
         public OrderService(IOrderRepository orderRepository, IExchangeClient[] clients, IBalanceRepository balanceRepository, Config config,
-            ILogRepository logRepository, IMoneyService moneyService)
+            ILogRepository logRepository, IMoneyService moneyService, INotSoldRepository notSoldRepository)
         {
             _orderRepository = orderRepository;
             _clients = clients;
@@ -30,6 +31,7 @@ namespace bot.core
             _config = config;
             _logRepository = logRepository;
             _moneyService = moneyService;
+            _notSoldRepository = notSoldRepository;
         }
 
         public async Task CheckOpenOrders()
@@ -65,7 +67,7 @@ namespace bot.core
 
             var transformResult = _moneyService.Transform(moneyToSpend, price, 0.26m);
 
-            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount);
+            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price);
             await _logRepository.Log(client.Platform, "Trade",
                 $"Added buy order for [pair:{pair}] [volume:{transformResult.TargetCurrencyAmount}]");
 
@@ -93,7 +95,7 @@ namespace bot.core
                 }
                 else
                 {
-                    await _balanceRepository.SetNotSold(client.Platform, pair);
+                    await _notSoldRepository.SetNotSold(client.Platform, pair);
                 }
             }
 
@@ -102,7 +104,7 @@ namespace bot.core
                 return;
             }
 
-            var orderIds = await client.AddOrder(OrderType.sell, volume);
+            var orderIds = await client.AddOrder(OrderType.sell, volume, price);
             await _logRepository.Log(client.Platform, "Trade",
                 $"Added sell order for [pair:{pair}] [volume:{volume}]");
 

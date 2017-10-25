@@ -19,7 +19,7 @@ namespace bot.core.tests
         public void Setup()
         {
             _container = new UnityContainer();
-            
+
             _container.RegisterType<IOrderService, OrderService>();
             _container.RegisterType<IMoneyService, MoneyService>();
             _container.RegisterType<ITradeService, TradeService>();
@@ -31,12 +31,12 @@ namespace bot.core.tests
             _container.RegisterInstance(Substitute.For<IBalanceRepository>());
             _container.RegisterInstance(Substitute.For<ILogRepository>());
             _container.RegisterInstance(Substitute.For<ITradeRepository>());
+            _container.RegisterInstance(Substitute.For<INotSoldRepository>());
             _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
-            
+
             _eventRepository = _container.Resolve<IEventRepository>();
 
-            var clients = _container.ResolveAll<IExchangeClient>();
-            _exchangeClient = clients.First();
+            _exchangeClient = _container.Resolve<IExchangeClient>("kraken");
         }
 
         [Test]
@@ -90,23 +90,6 @@ namespace bot.core.tests
             ser.Now.Returns(dt);
         }
 
-        private void SetupOrderService(Action<decimal> setBuyPrice, Action<decimal> setSellPrice)
-        {
-            var ser = _container.Resolve<IOrderService>();
-
-            ser.When(x => x.Buy(Arg.Any<IExchangeClient>(), Arg.Any<string>(), Arg.Any<decimal>()))
-                .Do(x =>
-                {
-                    setBuyPrice?.Invoke(Convert.ToDecimal(x.Args().Last()));
-                });
-
-            ser.When(x => x.Sell(Arg.Any<IExchangeClient>(), Arg.Any<string>(), Arg.Any<decimal>()))
-                .Do(x =>
-                {
-                    setSellPrice?.Invoke(Convert.ToDecimal(x.Args().Last()));
-                });
-        }
-
         private void SetupExchangeService(OrderType type, Action<decimal, decimal> setVolumePrice)
         {
             _exchangeClient.When(x => x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<decimal>()))
@@ -114,6 +97,9 @@ namespace bot.core.tests
                 {
                     setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[2]));
                 });
+
+            _exchangeClient.AddOrder(Arg.Any<OrderType>(), Arg.Any<decimal>(), Arg.Any<decimal>())
+                .ReturnsForAnyArgs(new List<string>());
         }
 
         [Test]
@@ -134,29 +120,20 @@ namespace bot.core.tests
             Assert.That(_container.Resolve<IDateTime>().Now, Is.EqualTo(new DateTime(2015, 05, 10)));
         }
 
-        [Test]
-        public void SetOrderService_Buy()
-        {
-            var price = decimal.Zero;
-            SetupOrderService(x => price = x, null);
-            var ser = _container.Resolve<IOrderService>();
-            ser.Buy(Substitute.For<IExchangeClient>(), "blah", 12.12m);
-            Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
-        }
-
-        [Test]
-        public void SetOrderService_Sell()
-        {
-            var price = decimal.Zero;
-            SetupOrderService(null, x => price = x);
-            var ser = _container.Resolve<IOrderService>();
-            ser.Sell(Substitute.For<IExchangeClient>(), "blah", 12.12m);
-            Assert.That(price, Is.EqualTo(12.12m).Within(0.001));
-        }
 
         private void SetUsdBalance(decimal balance)
         {
             _exchangeClient.GetBaseCurrencyBalance().Returns(Task.FromResult(balance));
+        }
+
+
+
+        private void SetupNotSold(Action<BalanceItem> action)
+        {
+            var nosSoldRespo = _container.Resolve<INotSoldRepository>();
+            var balanceRepository = _container.Resolve<IBalanceRepository>();
+            nosSoldRespo.When(x => x.SetNotSold(Arg.Any<string>(), Arg.Any<string>()))
+                .Do(async d => { action((await balanceRepository.Get("","")).First()); });
         }
 
         private void SetEthBalance(decimal volume, decimal price, int notSold)
@@ -174,15 +151,6 @@ namespace bot.core.tests
                 }));
         }
 
-       
-
-        private async Task SetupNotSold(Action<BalanceItem> action)
-        {
-            var bal = _container.Resolve<IBalanceRepository>();
-            
-            bal.When(x=>x.SetNotSold(Arg.Any<string>(), Arg.Any<string>()))
-                .Do(async d=> action((await bal.Get("", "")).First()));
-        }
         private List<BaseTrade> trades { get; set; }
 
         private async Task SetupTradeService(DateTime start, DateTime end)
@@ -204,61 +172,54 @@ namespace bot.core.tests
         [Test]
         public async Task RunSimulator()
         {
-            var dateTime = DateTime.Now.AddHours(-10);
+            var dateTime = DateTime.Now.AddHours(-40);
             await TradeSimulator(dateTime, DateTime.Now);
         }
 
         private async Task TradeSimulator(DateTime start, DateTime end)
         {
-            var file = Write("simulator", true, "Status,ETH,Price,USD balance");
+            var file = Write("simulator", true, "Time,Status,ETH,Price,USD balance");
             await SetConfig();
             var currentStatus = TradeStatus.Unknown;
             var config = _container.Resolve<Config>();
             var tradeService = _container.Resolve<ITradeService>();
             var notSold = 0;
             var ethBalance = decimal.Zero;
-            var usdBalance = decimal.Zero;
-            var price = decimal.Zero;
-
-            SetUsdBalance(65m);
-            SetEthBalance(0,0,0);
+            var usdBalance = 65m;
+            var lastSellPrice = decimal.Zero;
+            SetUsdBalance(usdBalance);
+            SetEthBalance(0, 0, 0);
             SetCurrentStatus(currentStatus);
             await SetupTradeService(start, end);
+            var currentTime = start;
 
-            await SetupNotSold(item=>
+            SetupNotSold( item =>
             {
-                notSold++;
+                notSold = notSold + 1;
                 SetEthBalance(item.Volume, item.Price, notSold);
+                Write(file, false, $"{currentTime:s}, not sold,{ethBalance},-,{notSold}");
             });
 
             SetupExchangeService(OrderType.buy, (vol, pr) =>
             {
                 ethBalance = ethBalance + vol;
-                usdBalance = usdBalance - ((vol * pr) + (vol * pr / 100 * 0.26m));
+                usdBalance = usdBalance - Math.Round(vol * pr + Math.Round(vol * pr / 100 * 0.26m, 2), 2);
                 SetUsdBalance(usdBalance);
-                SetEthBalance(ethBalance, pr,0);
-                Write(file, false, $"buy,{ethBalance},{price},{usdBalance}");
+                SetEthBalance(ethBalance, pr, 0);
+                Write(file, false, $"{currentTime:s},buy,{ethBalance},{pr},{usdBalance}");
                 SetCurrentStatus(TradeStatus.Buy);
             });
 
             SetupExchangeService(OrderType.sell, (vol, pr) =>
-           {
-               ethBalance = ethBalance - vol;
-               usdBalance = usdBalance + (vol * pr) - (vol * pr / 100 * 0.16m);
-               SetUsdBalance(usdBalance);
-               SetEthBalance(ethBalance, pr,0);
-               Write(file, false, $"sell,{ethBalance},{price},{usdBalance}");
-               SetCurrentStatus(TradeStatus.Sell);
-           });
-
-            SetupStatus(currentStatus, newStatus =>
             {
-                currentStatus = newStatus;
-                SetCurrentStatus(newStatus);
-
+                ethBalance = ethBalance - vol;
+                usdBalance = usdBalance + Math.Round(vol * pr, 2) - Math.Round(vol * pr / 100 * 0.16m, 2);
+                SetUsdBalance(usdBalance);
+                lastSellPrice = pr;
+                SetEthBalance(ethBalance, pr, 0);
+                Write(file, false, $"{currentTime:s},sell,{ethBalance},{pr},{usdBalance}");
+                SetCurrentStatus(TradeStatus.Sell);
             });
-
-            var currentTime = start;
 
             while (currentTime < end)
             {

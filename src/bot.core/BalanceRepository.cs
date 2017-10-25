@@ -9,7 +9,6 @@ namespace bot.core
     {
         Task Add(string platform, string pair, decimal volume, decimal price);
         Task Remove(string platform, string pair);
-        Task SetNotSold(string platform, string pair);
         Task<List<BalanceItem>> Get(string platform, string pair);
     }
 
@@ -37,22 +36,6 @@ namespace bot.core
             {
                 cmd.CommandText =
                     "delete from balance where platform=@platform and name=@pair";
-
-                cmd.Parameters.AddWithValue("@platform", platform);
-                cmd.Parameters.AddWithValue("@pair", pair);
-
-                await cmd.ExecuteNonQueryAsync();
-            });
-        }
-
-        public async Task SetNotSold(string platform, string pair)
-        {
-            await Execute(async cmd =>
-            {
-                cmd.CommandText =
-                    @"update balance 
-                      set notSoldCounter = notSoldCounter + 1, notSoldDate = getdate()
-                      where platform=@platform and name=@pair";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);

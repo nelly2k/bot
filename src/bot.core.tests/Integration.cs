@@ -31,13 +31,13 @@ namespace bot.core.tests
 
             var config = await configRepo.Get();
 
-            _dt = DateTime.Now.AddHours(-20);
+            _dt = DateTime.Now.AddHours(-80);
             var trades = (await _tradeRepository.LoadTrades(AltName, _dt)).ToList();
             var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
             var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
             var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
             
-            var grouped2 = trades.GroupAll(20, GroupBy.Minute).ToList();
+            var grouped2 = trades.GroupAll(30, GroupBy.Minute).ToList();
             var macd2 = grouped2.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
 
             var lines = (from m in macd
@@ -50,49 +50,6 @@ namespace bot.core.tests
             lines.Insert(0, "Date,RSI,MACD,Signal,Volume,PriceAvg,PriceMin,PriceMax,MACD2,Signal2");
 
             Write("macd_rsi", lines);
-        }
-
-
-        [Test]
-        public async Task Trail()
-        {
-            var result = new List<TradeEvent>();
-            var start = new DateTime(2017, 09, 29, 15, 0, 0);
-            var end = new DateTime(2017, 10, 05, 8, 00, 0);
-
-            var db = new TradeRepository();
-            var cofigRepo = new ConfigRepository();
-            var config = await cofigRepo.Get();
-
-            var currentTime = start;
-            var lines = new List<string>();
-            lines.Add("Date,Status,PriceAvg,PriceSell,PriceBuy");
-            while (currentTime <= end)
-            {
-                var trades = await db.LoadTrades("XETHZUSD", currentTime.AddHours(-config.AnalyseLoadHours), currentTime);
-
-                var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-                var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).MacdAnalysis();
-                var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
-                var rsiLastPeak = rsi.GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
-                    .FirstOrDefault();
-                var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, currentTime, macd, rsiLastPeak);
-                var price = grouped.First(x => x.DateTime == macd.Trade.DateTime);
-                if (newStatus != TradeStatus.Unknown && (!result.Any() || newStatus != result.Last().TradeStatus))
-                {
-                    var actualPrice = newStatus == TradeStatus.Buy ? price.PriceBuyAvg : price.PriceSellAvg;
-                    lines.Add($"{macd.Trade.DateTime},{newStatus},{price.Price:C},{price.PriceSellAvg:C},{price.PriceBuyAvg:C}");
-                    result.Add(new TradeEvent
-                    {
-                        DateTime = macd.Trade.DateTime,
-                        Price = actualPrice,
-                        TradeStatus = newStatus
-                    });
-                }
-
-                currentTime = currentTime.AddMinutes(config.LoadIntervalMinutes);
-            }
-            Write("trail_", lines);
         }
 
         //[Test]
@@ -175,94 +132,6 @@ namespace bot.core.tests
         //    }
 
         //}
-
-        private static string GetLine(string type, decimal initialUsd, Config config, ConfigurationTrailResult trailResult)
-        {
-            return
-                $"{type},{initialUsd},{config.LoadIntervalMinutes},{config.AnalyseLoadHours},{config.AnalyseGroupPeriodMinutes},{config.AnalyseTresholdMinutes}" +
-                $",{config.AnalyseMacdSlow},{config.AnalyseMacdFast},{config.AnalyseMacdSignal},{config.AnalyseRsiEmaPeriods},{config.AnalyseRsiLow}," +
-                $"{config.AnalyseRsiHigh},{trailResult.Price:C},{trailResult.BuyNum},{trailResult.SellNum}";
-        }
-
-        //private async Task<ConfigurationTrailResult> RunConfigTrail(Config config, decimal usd, DateTime start, DateTime end)
-        //{
-        //    var db = new TradeRepository();
-        //    var result = new ConfigurationTrailResult();
-        //    var core = new TradeService();
-        //    var currentTime = start;
-          
-        //    var currentUsd = usd;
-        //    var currentEth = decimal.Zero;
-        //    var price = decimal.Zero;
-        //    TradeStatus? lastStatus = null;
-        //    while (currentTime <= end)
-        //    {
-        //        var trades = await db.LoadTrades("XETHZUSD", currentTime.AddHours(-config.AnalyseLoadHours), currentTime);
-
-        //        try
-        //        {
-        //            var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-        //            var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).MacdAnalysis();
-        //            var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
-        //            var rsiLastPeak = rsi.GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
-        //                .FirstOrDefault();
-        //            var newStatus = AnalysisExtensions.AnalyseIndeces(config.AnalyseTresholdMinutes, currentTime, macd, rsiLastPeak);
-        //            var trade = grouped.FirstOrDefault(x => x.DateTime == macd.Trade.DateTime);
-        //            if (trade == null)
-        //            {
-        //                throw new Exception($"Trade is not identified. {config}");
-        //            }
-        //            if (newStatus != TradeStatus.Unknown && (lastStatus == null || newStatus != lastStatus))
-        //            {
-        //                lastStatus = newStatus;
-        //                if (newStatus == TradeStatus.Buy)
-        //                {
-        //                    price = Math.Round(trade.PriceBuyAvg == decimal.Zero ? trade.Price : trade.PriceBuyAvg, 2);
-        //                    var fee = core.Transform(usd, price, 0.26m);
-        //                   // currentEth = fee.TargetCurrencyAmount;
-        //                    currentUsd = fee.BaseCurrencyRest;
-        //                    result.BuyNum += 1;
-        //                }
-        //                else if (currentEth != decimal.Zero)
-        //                {
-        //                    price = trade.PriceSellAvg == decimal.Zero ? trade.Price : trade.PriceSellAvg;
-                            
-        //                    var fee = core.Transform(currentEth, price, 0.16m, FeeSource.Target);
-        //                    currentUsd = fee.TargetCurrencyAmount;
-        //                   // currentEth = fee.BaseCurrencyRest;
-        //                    result.SellNum += 1;
-        //                }
-        //            }
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            Console.WriteLine($"{config}{Environment.NewLine}{e}");
-        //            return result;
-        //        }
-
-        //        currentTime = currentTime.AddMinutes(config.LoadIntervalMinutes);
-        //    }
-
-        //    result.Price = currentEth * price + currentUsd;
-        //    return result;
-        //}
-
-    
-
-
-        private class ConfigurationTrailResult
-        {
-            public int BuyNum { get; set; }
-            public int SellNum { get; set; }
-            public decimal Price { get; set; }
-        }
-
-        private class TradeEvent
-        {
-            public decimal Price { get; set; }
-            public TradeStatus TradeStatus { get; set; }
-            public DateTime DateTime { get; set; }
-        }
 
         [Test]
         public async Task AllTogetherCertainPeriod()

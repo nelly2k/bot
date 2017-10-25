@@ -11,7 +11,6 @@ namespace bot.core
     {
         Task Trade();
         Task Trade(IExchangeClient client);
-        TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades);
         Task<TradeStatus> GetCurrentStatus(string platform);
     }
 
@@ -49,9 +48,12 @@ namespace bot.core
             var currentStatus = await GetCurrentStatus(client.Platform);
 
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
-            var trades = await _tradeRepository.LoadTrades(Pair, dt, _dateTime.Now);
+            var trades = (await _tradeRepository.LoadTrades(Pair, dt, _dateTime.Now)).ToList();
             var groupedTrades = trades.GroupAll(_config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-            var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList());
+            var groupedTradesSlow = trades.GroupAll(_config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
+
+            var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow);
+            
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;
@@ -87,13 +89,17 @@ namespace bot.core
                 tradeStatus.ToString());
         }
 
-        public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades)
+        public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow)
         {
             var macd = groupedTrades.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast, _config.AnalyseMacdSignal).MacdAnalysis();
             var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config.AnalyseRsiEmaPeriods)
                 .GetPeaks(_config.AnalyseRsiLow, _config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                 .FirstOrDefault();
-            return AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak);
+
+            var macdSlow = groupedTradesSlow.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast,
+                _config.AnalyseMacdSignal).MacdSlowAnalysis();
+
+            return AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlow);
         }
     }
 }

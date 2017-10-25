@@ -8,6 +8,7 @@ namespace bot.model
         public int LoadIntervalMinutes { get; set; } = 3;
         public int AnalyseLoadHours { get; set; } = 12;
         public int AnalyseGroupPeriodMinutes { get; set; } = 4;
+        public int AnalyseMacdGroupPeriodMinutesSlow { get; set; } = 4;
         public int AnalyseTresholdMinutes { get; set; } = 30;
         public int AnalyseMacdSlow { get; set; } = 26;
         public int AnalyseMacdFast { get; set; } = 12;

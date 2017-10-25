@@ -17,6 +17,7 @@ namespace bot.core
             {"load_interval_minutes", (c, v) => c.LoadIntervalMinutes = Convert.ToInt32(v)},
             {"analyse_load_hours", (c, v) => c.AnalyseLoadHours = Convert.ToInt32(v)},
             {"analyse_group_period_minutes", (c, v) => c.AnalyseGroupPeriodMinutes = Convert.ToInt32(v)},
+            {"analyse_amcd_group_perios_minutes_slow", (c, v) => c.AnalyseMacdGroupPeriodMinutesSlow = Convert.ToInt32(v)},
             {"analyse_treshold_minutes", (c, v) => c.AnalyseTresholdMinutes = Convert.ToInt32(v)},
             {"analyse_macd_slow", (c, v) => c.AnalyseMacdSlow = Convert.ToInt32(v)},
             {"analyse_macd_fast", (c, v) => c.AnalyseMacdFast = Convert.ToInt32(v)},
