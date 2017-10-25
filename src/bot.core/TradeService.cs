@@ -12,7 +12,7 @@ namespace bot.core
         Task Trade();
         Task Trade(IExchangeClient client);
         TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades);
-        Task<TradeStatus> GetCurrentStatus();
+        Task<TradeStatus> GetCurrentStatus(string platform);
     }
 
     public class TradeService : ITradeService
@@ -24,7 +24,6 @@ namespace bot.core
         private readonly IOrderService _orderService;
         private readonly IExchangeClient[] _exchangeClients;
         private const string Pair = "XETHZUSD";
-        private const string Platform = "kraken";
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
             IOrderService orderService, IExchangeClient[] exchangeClients)
@@ -47,7 +46,7 @@ namespace bot.core
 
         public async Task Trade(IExchangeClient client)
         {
-            var currentStatus = await GetCurrentStatus();
+            var currentStatus = await GetCurrentStatus(client.Platform);
 
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
             var trades = await _tradeRepository.LoadTrades(Pair, dt, _dateTime.Now);
@@ -57,14 +56,13 @@ namespace bot.core
             {
                 return;
             }
-            //TODO where is set status?
-            //Sell need to be implemented in simulator
             switch (newStatus)
             {
                 case TradeStatus.Buy:
                 {
                     var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
                     await _orderService.Buy(client, Pair, lastTrade.PriceBuyAvg);
+                    
                     return;
                 }
                 case TradeStatus.Sell:
@@ -74,12 +72,19 @@ namespace bot.core
                     break;
                 }
             }
+            await SetCurrentStatus(client.Platform, newStatus);
         }
 
-        public async Task<TradeStatus> GetCurrentStatus()
+        public async Task<TradeStatus> GetCurrentStatus(string platform)
         {
-            var currentStatusStr = await _eventRepository.GetLastEventValue(Platform, $"{EventConstant.StatusUpdate} {Pair}");
+            var currentStatusStr = await _eventRepository.GetLastEventValue(platform, $"{EventConstant.StatusUpdate} {Pair}");
             return (TradeStatus)Enum.Parse(typeof(TradeStatus), currentStatusStr);
+        }
+
+        public async Task SetCurrentStatus(string platform,TradeStatus tradeStatus)
+        {
+            await _eventRepository.UpdateLastEvent(platform, $"{EventConstant.StatusUpdate} {Pair}",
+                tradeStatus.ToString());
         }
 
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades)
@@ -90,10 +95,5 @@ namespace bot.core
                 .FirstOrDefault();
             return AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak);
         }
-
-
     }
-
-
-
 }

@@ -87,7 +87,7 @@ namespace bot.core
                 var sellPrice = balanceItem.Volume * price +
                                 _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
                 
-                if (boughtPrice < sellPrice)
+                if (boughtPrice < sellPrice || balanceItem.NotSold >= _config.MaxMissedSells)
                 {
                     volume += balanceItem.Volume;
                 }

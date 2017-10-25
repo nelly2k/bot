@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using bot.core.Extensions;
 using bot.model;
 using Microsoft.Practices.Unity;
 using NSubstitute;
@@ -16,13 +15,11 @@ namespace bot.core.tests
         private IEventRepository _eventRepository;
         private IExchangeClient _exchangeClient;
 
-        private const string pair = "XETHZUSD";
-
         [SetUp]
         public void Setup()
         {
             _container = new UnityContainer();
-            _container.RegisterType<ITradeRepository, TradeRepository>();
+            
             _container.RegisterType<IOrderService, OrderService>();
             _container.RegisterType<IMoneyService, MoneyService>();
             _container.RegisterType<ITradeService, TradeService>();
@@ -33,9 +30,9 @@ namespace bot.core.tests
             _container.RegisterInstance(Substitute.For<IOrderRepository>());
             _container.RegisterInstance(Substitute.For<IBalanceRepository>());
             _container.RegisterInstance(Substitute.For<ILogRepository>());
+            _container.RegisterInstance(Substitute.For<ITradeRepository>());
             _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
-
-
+            
             _eventRepository = _container.Resolve<IEventRepository>();
 
             var clients = _container.ResolveAll<IExchangeClient>();
@@ -124,9 +121,9 @@ namespace bot.core.tests
         {
             var tradeSer = _container.Resolve<ITradeService>();
             SetCurrentStatus(TradeStatus.Buy);
-            Assert.That(await tradeSer.GetCurrentStatus(), Is.EqualTo(TradeStatus.Buy));
+            Assert.That(await tradeSer.GetCurrentStatus(""), Is.EqualTo(TradeStatus.Buy));
             SetCurrentStatus(TradeStatus.Sell);
-            Assert.That(await tradeSer.GetCurrentStatus(), Is.EqualTo(TradeStatus.Sell));
+            Assert.That(await tradeSer.GetCurrentStatus(""), Is.EqualTo(TradeStatus.Sell));
 
         }
 
@@ -162,19 +159,46 @@ namespace bot.core.tests
             _exchangeClient.GetBaseCurrencyBalance().Returns(Task.FromResult(balance));
         }
 
-        private void SetEthBalance(decimal volume, decimal price)
+        private void SetEthBalance(decimal volume, decimal price, int notSold)
         {
             var balanceRepository = _container.Resolve<IBalanceRepository>();
             balanceRepository.Get(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(
-                new List<BalanceItem>()
+                new List<BalanceItem>
                 {
-                    new BalanceItem()
+                    new BalanceItem
                     {
                         Volume = volume,
-                        Price = price
-
+                        Price = price,
+                        NotSold = notSold
                     }
                 }));
+        }
+
+       
+
+        private async Task SetupNotSold(Action<BalanceItem> action)
+        {
+            var bal = _container.Resolve<IBalanceRepository>();
+            
+            bal.When(x=>x.SetNotSold(Arg.Any<string>(), Arg.Any<string>()))
+                .Do(async d=> action((await bal.Get("", "")).First()));
+        }
+        private List<BaseTrade> trades { get; set; }
+
+        private async Task SetupTradeService(DateTime start, DateTime end)
+        {
+            var real = new TradeRepository();
+            var config = _container.Resolve<Config>();
+            trades = (await real.LoadTrades("XETHZUSD", start.AddHours(-config.AnalyseLoadHours), end)).ToList();
+
+            var repo = _container.Resolve<ITradeRepository>();
+            repo.LoadTrades(Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<DateTime>())
+                .Returns(args =>
+                {
+                    var startDate = Convert.ToDateTime(args[1]).AddHours(-config.AnalyseLoadHours);
+                    var endDate = Convert.ToDateTime(args[2]);
+                    return trades.Where(x => x.DateTime > startDate && x.DateTime < endDate);
+                });
         }
 
         [Test]
@@ -183,6 +207,7 @@ namespace bot.core.tests
             var dateTime = DateTime.Now.AddHours(-10);
             await TradeSimulator(dateTime, DateTime.Now);
         }
+
         private async Task TradeSimulator(DateTime start, DateTime end)
         {
             var file = Write("simulator", true, "Status,ETH,Price,USD balance");
@@ -190,21 +215,30 @@ namespace bot.core.tests
             var currentStatus = TradeStatus.Unknown;
             var config = _container.Resolve<Config>();
             var tradeService = _container.Resolve<ITradeService>();
-
+            var notSold = 0;
             var ethBalance = decimal.Zero;
             var usdBalance = decimal.Zero;
             var price = decimal.Zero;
 
             SetUsdBalance(65m);
+            SetEthBalance(0,0,0);
             SetCurrentStatus(currentStatus);
+            await SetupTradeService(start, end);
+
+            await SetupNotSold(item=>
+            {
+                notSold++;
+                SetEthBalance(item.Volume, item.Price, notSold);
+            });
 
             SetupExchangeService(OrderType.buy, (vol, pr) =>
             {
                 ethBalance = ethBalance + vol;
                 usdBalance = usdBalance - ((vol * pr) + (vol * pr / 100 * 0.26m));
                 SetUsdBalance(usdBalance);
-                SetEthBalance(ethBalance, pr);
+                SetEthBalance(ethBalance, pr,0);
                 Write(file, false, $"buy,{ethBalance},{price},{usdBalance}");
+                SetCurrentStatus(TradeStatus.Buy);
             });
 
             SetupExchangeService(OrderType.sell, (vol, pr) =>
@@ -212,8 +246,9 @@ namespace bot.core.tests
                ethBalance = ethBalance - vol;
                usdBalance = usdBalance + (vol * pr) - (vol * pr / 100 * 0.16m);
                SetUsdBalance(usdBalance);
-               SetEthBalance(ethBalance, pr);
+               SetEthBalance(ethBalance, pr,0);
                Write(file, false, $"sell,{ethBalance},{price},{usdBalance}");
+               SetCurrentStatus(TradeStatus.Sell);
            });
 
             SetupStatus(currentStatus, newStatus =>
