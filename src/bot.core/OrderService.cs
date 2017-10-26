@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using bot.model;
 
@@ -8,8 +9,8 @@ namespace bot.core
     {
         Task CheckOpenOrders();
         Task CheckOpenOrders(IExchangeClient client);
-        Task Buy(IExchangeClient client, string pair, decimal price);
-        Task Sell(IExchangeClient client, string pair, decimal price);
+        Task Buy(IExchangeClient client, string pair, decimal price, bool isMarket = false);
+        Task Sell(IExchangeClient client, string pair, decimal price, bool isMarket = false);
     }
 
     public class OrderService : IOrderService
@@ -47,17 +48,17 @@ namespace bot.core
             var openOrders = await _orderRepository.Get(client.Platform);
             var orders = await client.GetOrders(openOrders.Keys.ToArray());
 
-            foreach (var order in orders.Where(x=>x.OrderStatus == OrderStatus.Closed))
+            foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed))
             {
                 await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
                 await _orderRepository.Remove(client.Platform, order.Id);
             }
         }
 
-        public async Task Buy(IExchangeClient client, string pair, decimal price)
+        public async Task Buy(IExchangeClient client, string pair, decimal price, bool isMarket = false)
         {
             var currentBalance = await client.GetBaseCurrencyBalance();
-            var moneyToSpend = currentBalance / 100m * (decimal) _config.PairPercent[pair];
+            var moneyToSpend = currentBalance / 100m * (decimal)_config.PairPercent[pair];
             if (moneyToSpend < _config.MinBuyBaseCurrency)
             {
                 await _logRepository.Log(client.Platform, "trade error",
@@ -66,8 +67,16 @@ namespace bot.core
             }
 
             var transformResult = _moneyService.Transform(moneyToSpend, price, 0.26m);
+            List<string> orderIds;
+            if (isMarket)
+            {
+                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount);
+            }
+            else
+            {
+                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price);
+            }
 
-            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price);
             await _logRepository.Log(client.Platform, "Trade",
                 $"Added buy order for [pair:{pair}] [volume:{transformResult.TargetCurrencyAmount}]");
 
@@ -77,7 +86,7 @@ namespace bot.core
             }
         }
 
-        public async Task Sell(IExchangeClient client, string pair, decimal price)
+        public async Task Sell(IExchangeClient client, string pair, decimal price, bool isMarket = false)
         {
             var balanceItems = await _balanceRepository.Get(client.Platform, pair);
 
@@ -88,7 +97,7 @@ namespace bot.core
                 var boughtPrice = balanceItem.Volume * balanceItem.Price + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.16m);
                 var sellPrice = balanceItem.Volume * price +
                                 _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
-                
+
                 if (boughtPrice < sellPrice || balanceItem.NotSold >= _config.MaxMissedSells)
                 {
                     volume += balanceItem.Volume;
@@ -103,8 +112,15 @@ namespace bot.core
             {
                 return;
             }
-
-            var orderIds = await client.AddOrder(OrderType.sell, volume, price);
+            List<string> orderIds;
+            if (isMarket)
+            {
+                orderIds = await client.AddOrder(OrderType.sell, volume);
+            }
+            else
+            {
+                orderIds = await client.AddOrder(OrderType.sell, volume, price);
+            }
             await _logRepository.Log(client.Platform, "Trade",
                 $"Added sell order for [pair:{pair}] [volume:{volume}]");
 

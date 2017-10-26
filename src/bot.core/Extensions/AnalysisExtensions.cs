@@ -17,7 +17,7 @@ namespace bot.core.Extensions
 
             var minutesSincePeak = (now - lastRsiPeak.ExitTrade.DateTime).TotalMinutes;
             var minutesSinceCross = (now - macdAnalysisResult.Trade.DateTime).TotalMinutes;
-            
+
             if (minutesSinceCross > treshold || minutesSincePeak > treshold)
             {
                 return TradeStatus.Unknown;
@@ -28,27 +28,21 @@ namespace bot.core.Extensions
                 return TradeStatus.Buy;
             }
 
-            if (macdAnalysisResult.CrossType == CrossType.MacdFalls && lastRsiPeak.PeakType == PeakType.High && macdSlow == TradeStatus.Sell)
+            if (macdAnalysisResult.CrossType == CrossType.MacdFalls && lastRsiPeak.PeakType == PeakType.High)
             {
                 return TradeStatus.Sell;
             }
-            
+
             return TradeStatus.Unknown;
         }
 
         public static TradeStatus MacdSlowAnalysis(this IEnumerable<MacdResultItem> macd)
         {
             var last = macd.OrderByDescending(x => x.DateTime).Take(3).ToList();
-            if (last.All(x => x.Macd > x.Signal))
+            if (last.All(x => x.Macd > x.Signal || Math.Abs(x.Macd - x.Signal) < 0.00m))
             {
                 return TradeStatus.Buy;
             }
-
-            if (last.All(x => x.Macd < x.Signal))
-            {
-                return TradeStatus.Sell;
-            }
-
             return TradeStatus.Unknown;
         }
 
@@ -56,7 +50,7 @@ namespace bot.core.Extensions
         {
             var list = macd.OrderByDescending(x => x.DateTime).ToList();
             CrossType? currentType = null;
-            MacdResultItem previous=null;
+            MacdResultItem previous = null;
             var result = new MacdAnalysisResult();
             foreach (var item in list)
             {
@@ -157,7 +151,7 @@ namespace bot.core.Extensions
 
             return result;
         }
-        
+
     }
 
     public class PeakAnalysisResult
