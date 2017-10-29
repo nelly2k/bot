@@ -22,10 +22,11 @@ namespace bot.core
         private readonly Config _config;
         private readonly IOrderService _orderService;
         private readonly IExchangeClient[] _exchangeClients;
+        private readonly ILogRepository _logRepository;
         private const string Pair = "ETHUSD";
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
-            IOrderService orderService, IExchangeClient[] exchangeClients)
+            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository)
         {
             _tradeRepository = tradeRepository;
             _dateTime = dateTime;
@@ -33,14 +34,26 @@ namespace bot.core
             _config = config;
             _orderService = orderService;
             _exchangeClients = exchangeClients;
+            _logRepository = logRepository;
         }
 
         public async Task Trade()
         {
             foreach (var client in _exchangeClients)
             {
-                await _orderService.CheckOpenOrders(client);
-                await Trade(client);
+                try
+                {
+                    await _orderService.CheckOpenOrders(client);
+                    await Trade(client);
+                }
+                catch (Exception e)
+                {
+                    await _logRepository.Log(client.Platform, "Error", e.Message);
+                    await _logRepository.Log(client.Platform, "Error Stack Trace", e.StackTrace);
+                    Console.WriteLine(e);
+                    throw;
+                }
+               
             }
         }
 
