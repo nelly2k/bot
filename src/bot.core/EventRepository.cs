@@ -46,7 +46,7 @@ namespace bot.core
                 con.Open();
                 using (var com = new SqlCommand(text, con))
                 {
-                    com.Parameters.AddWithValue("@name", eventName);
+                    com.Parameters.AddWithValue("@eventName", eventName);
                     com.Parameters.AddWithValue("@platform", platform);
                     try
                     {

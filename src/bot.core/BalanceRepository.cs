@@ -35,7 +35,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "delete from balance where platform=@platform and name=@pair";
+                    "update balance set isDeleted=1 where platform=@platform and name=@pair";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);
@@ -51,7 +51,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    @"select volume, price, notSoldCounter, notSoldDate, boughtDate from balance where platform=@platform and name=@pair";
+                    @"select volume, price, notSoldCounter, notSoldDate, boughtDate from balance where platform=@platform and name=@pair and isDeleted=0";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);

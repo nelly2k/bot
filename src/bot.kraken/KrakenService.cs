@@ -199,7 +199,8 @@ namespace bot.kraken
                 OrderStatus = x.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending,
                 Volume = x.Volume,
                 Price = x.Price,
-                Pair = x.Pair
+                Pair = x.Pair,
+                OrderType = x.OrderType
             }).ToList();
         }
 

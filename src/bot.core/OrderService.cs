@@ -5,7 +5,7 @@ using bot.model;
 
 namespace bot.core
 {
-    public interface IOrderService
+    public interface IOrderService:IService
     {
         Task CheckOpenOrders();
         Task CheckOpenOrders(IExchangeClient client);
@@ -46,11 +46,23 @@ namespace bot.core
         public async Task CheckOpenOrders(IExchangeClient client)
         {
             var openOrders = await _orderRepository.Get(client.Platform);
+            if (!openOrders.Any())
+            {
+                return;
+            }
             var orders = await client.GetOrders(openOrders.Keys.ToArray());
 
             foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed))
             {
-                await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
+                if (order.OrderType == OrderType.buy)
+                {
+                    await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
+                }
+                else
+                {
+                    await _balanceRepository.Remove(client.Platform, order.Pair);
+                }
+                
                 await _orderRepository.Remove(client.Platform, order.Id);
             }
         }
@@ -70,11 +82,11 @@ namespace bot.core
             List<string> orderIds;
             if (isMarket)
             {
-                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount);
+                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair:pair);
             }
             else
             {
-                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price);
+                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price, pair: pair);
             }
 
             await _logRepository.Log(client.Platform, "Trade",
@@ -115,11 +127,11 @@ namespace bot.core
             List<string> orderIds;
             if (isMarket)
             {
-                orderIds = await client.AddOrder(OrderType.sell, volume);
+                orderIds = await client.AddOrder(OrderType.sell, volume, pair: pair);
             }
             else
             {
-                orderIds = await client.AddOrder(OrderType.sell, volume, price);
+                orderIds = await client.AddOrder(OrderType.sell, volume, price, pair: pair);
             }
             await _logRepository.Log(client.Platform, "Trade",
                 $"Added sell order for [pair:{pair}] [volume:{volume}]");

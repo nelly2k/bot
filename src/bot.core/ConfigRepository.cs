@@ -5,7 +5,7 @@ using bot.model;
 
 namespace bot.core
 {
-    public interface IConfigRepository
+    public interface IConfigRepository:IService
     {
         Task<Config> Get(string platform = "kraken");
     }

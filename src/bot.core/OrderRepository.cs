@@ -33,7 +33,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "delete openOrder where platform = @platform and id = @orderId";
+                    "update openOrder set isDeleted = 1 where platform = @platform and id = @orderId";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
@@ -48,7 +48,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "select id from openOrder, altname where platform = @platform";
+                    "select id, altname from openOrder where platform = @platform and isDeleted=0";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
 

@@ -172,7 +172,7 @@ namespace bot.core.tests
         [Test]
         public async Task RunSimulator()
         {
-            var dateTime = DateTime.Now.AddHours(-35);
+            var dateTime = DateTime.Now.AddHours(-100);
             await TradeSimulator(dateTime, DateTime.Now);
         }
 
@@ -202,6 +202,7 @@ namespace bot.core.tests
 
             SetupExchangeService(OrderType.buy, (vol, pr) =>
             {
+                notSold = 0;
                 ethBalance = ethBalance + vol;
                 usdBalance = usdBalance - Math.Round(vol * pr + Math.Round(vol * pr / 100 * 0.26m, 2), 2);
                 SetUsdBalance(usdBalance);

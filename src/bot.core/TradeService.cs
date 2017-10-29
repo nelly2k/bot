@@ -22,7 +22,7 @@ namespace bot.core
         private readonly Config _config;
         private readonly IOrderService _orderService;
         private readonly IExchangeClient[] _exchangeClients;
-        private const string Pair = "XETHZUSD";
+        private const string Pair = "ETHUSD";
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
             IOrderService orderService, IExchangeClient[] exchangeClients)
@@ -39,6 +39,7 @@ namespace bot.core
         {
             foreach (var client in _exchangeClients)
             {
+                await _orderService.CheckOpenOrders(client);
                 await Trade(client);
             }
         }
@@ -48,12 +49,12 @@ namespace bot.core
             var currentStatus = await GetCurrentStatus(client.Platform);
 
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
-            var trades = (await _tradeRepository.LoadTrades(Pair, dt, _dateTime.Now)).ToList();
+            var trades = (await _tradeRepository.LoadTrades("XETHZUSD", dt, _dateTime.Now)).ToList();
             var groupedTrades = trades.GroupAll(_config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
             var groupedTradesSlow = trades.GroupAll(_config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
 
             var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow);
-            
+            Console.Write($" Status: {newStatus}");
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;

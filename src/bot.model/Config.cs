@@ -18,7 +18,7 @@ namespace bot.model
         public int AnalyseRsiHigh{ get; set; } = 70;
         public int MinBuyBaseCurrency{ get; set; } = 2;
         public int MaxMissedSells { get; set; } = 3;
-        public string BaseCurrency { get; set; } = "USD";
+        public string BaseCurrency { get; set; } = "ZUSD";
 
         public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();
 

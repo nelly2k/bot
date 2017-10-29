@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
+using bot.model;
 
 namespace bot.core
 {
-    public interface ILogRepository
+    public interface ILogRepository:IService
     {
         Task Log(string platform, string status, string what);
     }

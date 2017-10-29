@@ -1,73 +1,55 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using bot.core.Extensions;
+using bot.kraken;
 using bot.model;
+using Microsoft.Practices.Unity;
 using Timer = System.Timers.Timer;
 
 namespace bot.core.trading
 {
     class Program
     {
-        private static TradeService _tradeService;
-        private static TradeRepository _db;
         private static Timer _timer;
-        private static ConfigRepository _configRepository;
+        private static UnityContainer _container;
 
         static void Main(string[] args)
         {
-          
-            _db = new TradeRepository();
-            _configRepository = new ConfigRepository();
-            _timer = new Timer(3 * 60 * 1000);
-            _timer.Elapsed += Timer_Elapsed;
-            _timer.AutoReset = true;
-            _timer.Start();
             
-            Console.ReadLine();
+            ConfigContainer();
+            
+            _timer = new Timer(_container.Resolve<Config>().LoadIntervalMinutes * 60 * 1000);
+            Timer_Elapsed(null, null);
+            _timer.Elapsed += Timer_Elapsed;
+            _timer.Start();
+
+            Console.ReadKey();
         }
 
         static void Timer_Elapsed(object sender, EventArgs e)
         {
-           
-            Task.Run(RunAsync).ContinueWith(r =>
+            Console.WriteLine($"{DateTime.Now:G} Start trading");
+            var configRepository = _container.Resolve<IConfigRepository>();
+            configRepository.Get("kraken").ContinueWith(configResponse =>
             {
-                _timer.Interval = (r.Result?.LoadIntervalMinutes ?? 3) * 60 * 1000;
-                if (r.IsFaulted && r.Exception != null)
-                {
-                    
-                    Console.WriteLine("An exception here");
-                    Exception ex = r.Exception;
+                _container.RegisterInstance(configResponse.Result);
 
-                    while (ex is AggregateException && ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine(ex.StackTrace);
-                }
-            }).Wait(new TimeSpan((long) (1.5 * 60 * 1000)));
+                
+                var tradeService = _container.Resolve<ITradeService>();
+                tradeService.Trade().Wait(new TimeSpan(0, 0, 3));
+                _timer.Interval = configResponse.Result.LoadIntervalMinutes * 60 * 1000;
+            }).Wait(new TimeSpan(0, 0,5));
+
         }
 
-        static async Task<Config> RunAsync()
+        private static void ConfigContainer()
         {
-            var config = await _configRepository.Get();
-            //await _tradeService.SetStatus(config).ContinueWith(r =>
-            //{
-            //    if (r.IsFaulted && r.Exception != null)
-            //    {
-            //        Console.WriteLine("An exception here");
-            //        Exception ex = r.Exception;
-
-            //        while (ex is AggregateException && ex.InnerException != null)
-            //        {
-            //            ex = ex.InnerException;
-            //        }
-            //        Console.WriteLine(ex.Message);
-            //        Console.WriteLine(ex.StackTrace);
-            //    }
-            //});
-            return config;
-           
+            _container = new UnityContainer();
+            _container.RegisterInstance(new Config());
+            _container.RegisterAssembleyWith<ITradeRepository>();
+            _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
+            _container.RegisterDateTime();
         }
     }
 }

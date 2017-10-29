@@ -121,6 +121,7 @@ namespace bot.kraken.test
             await (await Client()).AddOrder(OrderType.buy, 0.04m);
         }
 
+        [Ignore("It is actually buying")]
         [Test]
         public async Task Sell()
         {
@@ -140,9 +141,17 @@ namespace bot.kraken.test
         }
 
         [Test]
-        public async  Task GetOrder()
+        public async  Task GetOrderInfo()
         {
             var result = await (await Client()).GetOrdersInfo("O5YA6T-IXSJS-3GPWKN");
+
+            Assert.That(result, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task GetOrder()
+        {
+            var result = await (await Client()).GetOrders("ON3ZLP-TJK5D-B7UN23", "OWFXTE-VNVDA-6LLX6X");
 
             Assert.That(result, Is.Not.Null);
         }

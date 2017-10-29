@@ -23,6 +23,8 @@ namespace bot.core.tests
             var one = (await balanceRepository.Get(platform, pair)).First();
             Assert.That(one.NotSoldtDate,Is.Not.Null);
             Assert.That(one.NotSold,Is.EqualTo(1));
+
+            Assert.That(one.Volume, Is.EqualTo(0.25m).Within(0.01));
             
             await notSoldRepository.SetNotSold(platform, pair);
             one = (await balanceRepository.Get(platform, pair)).First();

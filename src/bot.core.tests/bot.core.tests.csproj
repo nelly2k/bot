@@ -128,6 +128,8 @@
   <ItemGroup>
     <Compile Include="Integration.cs" />
     <Compile Include="IntegrationTests.cs" />
+    <Compile Include="OrderServiceIntegrationTests.cs" />
+    <Compile Include="WheenStatus.cs" />
     <Compile Include="WhenAnalysingMacd.cs" />
     <Compile Include="WhenCalcCurrencyAmount.cs" />
     <Compile Include="WhenCalcMovingAverages.cs" />
@@ -147,6 +149,10 @@
     <ProjectReference Include="..\bot.core\bot.core.csproj">
       <Project>{c3d60570-db25-4fe2-b90b-65fda05dbaaa}</Project>
       <Name>bot.core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\bot.kraken\bot.kraken.csproj">
+      <Project>{56fc4aea-c021-42ab-9796-44156c78c206}</Project>
+      <Name>bot.kraken</Name>
     </ProjectReference>
     <ProjectReference Include="..\bot.model\bot.model.csproj">
       <Project>{B26AFD5B-88C6-4FF5-8601-1EFE8B869479}</Project>

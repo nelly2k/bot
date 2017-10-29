@@ -20,8 +20,8 @@ use bot;
 create table trades(
 	id int not null identity constraint pk_trades primary key,
 	altname nvarchar(15),
-	price decimal,
-	volume decimal,
+	price decimal(18,10),
+	volume decimal(18,10),
 	tradeTime datetime,
 	buy_sell char(1),
 	market_limit char(1),
@@ -73,16 +73,23 @@ go
 create table balance(
 	platform nvarchar(50),
 	name nvarchar(15),
-	volume decimal,
-	price decimal, 
-	notSoldCounter int,
+	volume decimal(18,10),
+	price decimal(18,10), 
+	notSoldCounter int  constraint df_notSoldCounter default (0),
 	notSoldDate DateTime,
-	boughtDate Datetime,
+	boughtDate Datetime constraint df_boughtDate default (getdate()),
+	isDeleted bit constraint df_balance_isDelete default (0)
 )
 
 create table openOrder(
 	
 	platform nvarchar(50),
 	altname nvarchar(15),
-	id nvarchar(500) 
+	id nvarchar(500),
+	isDeleted bit constraint df_openOrder_isDelete default (0)
 )
+
+
+drop table balance
+drop table openOrder
+
