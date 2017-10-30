@@ -37,6 +37,7 @@ namespace bot.service.loader
             _timer = new Timer(_container.Resolve<Config>().LoadIntervalMinutes * 60 * 1000);
             _timer.Elapsed += Timer_Elapsed;
             _timer.Start();
+            Timer_Elapsed(null, null);
         }
 
         protected override void OnStop()

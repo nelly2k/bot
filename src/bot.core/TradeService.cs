@@ -23,10 +23,11 @@ namespace bot.core
         private readonly IOrderService _orderService;
         private readonly IExchangeClient[] _exchangeClients;
         private readonly ILogRepository _logRepository;
+        private readonly IFileService _fileService;
         private const string Pair = "ETHUSD";
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
-            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository)
+            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository, IFileService fileService)
         {
             _tradeRepository = tradeRepository;
             _dateTime = dateTime;
@@ -35,6 +36,7 @@ namespace bot.core
             _orderService = orderService;
             _exchangeClients = exchangeClients;
             _logRepository = logRepository;
+            _fileService = fileService;
         }
 
         public async Task Trade()
@@ -48,10 +50,10 @@ namespace bot.core
                 }
                 catch (Exception e)
                 {
+                    _fileService.Write($"{DateTime.Now:G} {e.Message}");
+                    _fileService.Write(e.StackTrace);
                     await _logRepository.Log(client.Platform, "Error", e.Message);
                     await _logRepository.Log(client.Platform, "Error Stack Trace", e.StackTrace);
-                    Console.WriteLine(e);
-                    throw;
                 }
                
             }
@@ -60,14 +62,14 @@ namespace bot.core
         public async Task Trade(IExchangeClient client)
         {
             var currentStatus = await GetCurrentStatus(client.Platform);
-
+            await _eventRepository.UpdateLastEvent(client.Platform, $"{EventConstant.Trade} {Pair}",string.Empty);
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
             var trades = (await _tradeRepository.LoadTrades("XETHZUSD", dt, _dateTime.Now)).ToList();
             var groupedTrades = trades.GroupAll(_config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
             var groupedTradesSlow = trades.GroupAll(_config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
 
             var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow);
-            Console.Write($" Status: {newStatus}");
+            Console.WriteLine($"{DateTime.Now:G} Status: {newStatus}");
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;
@@ -78,8 +80,8 @@ namespace bot.core
                 {
                     var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
                     await _orderService.Buy(client, Pair, lastTrade.PriceBuyAvg);
-                    
-                    return;
+
+                    break;
                 }
                 case TradeStatus.Sell:
                 {

@@ -13,6 +13,7 @@ namespace bot.core.trading
     {
         private static Timer _timer;
         private static UnityContainer _container;
+        private static IFileService _fileService;
 
         static void Main(string[] args)
         {
@@ -30,17 +31,41 @@ namespace bot.core.trading
         static void Timer_Elapsed(object sender, EventArgs e)
         {
             Console.WriteLine($"{DateTime.Now:G} Start trading");
-            var configRepository = _container.Resolve<IConfigRepository>();
-            configRepository.Get("kraken").ContinueWith(configResponse =>
+        
+            try
             {
-                _container.RegisterInstance(configResponse.Result);
+                var configRepository = _container.Resolve<IConfigRepository>();
+                Config config = null;
+                configRepository.Get("kraken").ContinueWith(configResponse =>
+                {
+                    config = configResponse.Result;
 
-                
+                }).Wait();
+                if (config == null)
+                {
+                    _fileService.Write($"{DateTime.Now:G} Config wasn't loaded");
+                    return;
+                }
+                _container.RegisterInstance(config);
+
                 var tradeService = _container.Resolve<ITradeService>();
-                tradeService.Trade().Wait(new TimeSpan(0, 0, 3));
-                _timer.Interval = configResponse.Result.LoadIntervalMinutes * 60 * 1000;
-            }).Wait(new TimeSpan(0, 0,5));
+                tradeService.Trade().ContinueWith(task =>
+                {
+                    if (task.Exception != null)
+                    {
+                        _fileService.Write($"{DateTime.Now:G} {task.Exception.Message}");
+                        _fileService.Write(task.Exception.StackTrace);
+                    }
+                }).Wait(new TimeSpan(0, 0, 3));
 
+                _timer.Interval = config.LoadIntervalMinutes * 60 * 1000;
+
+            }
+            catch (Exception ex)
+            {
+                _fileService.Write($"{DateTime.Now:G} {ex.Message}");
+                _fileService.Write(ex.StackTrace);
+            }
         }
 
         private static void ConfigContainer()
@@ -50,6 +75,7 @@ namespace bot.core.trading
             _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
+            _fileService = _container.Resolve<IFileService>();
         }
     }
 }

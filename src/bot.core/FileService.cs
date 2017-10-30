@@ -11,7 +11,7 @@ namespace bot.core
     {
         public void Write(string message)
         {
-            using (var file = new System.IO.StreamWriter($"h:\\loader_log.txt", true))
+            using (var file = new System.IO.StreamWriter($"h:\\error_log.txt", true))
             {
                 file.WriteLine(message);
                 file.Close();

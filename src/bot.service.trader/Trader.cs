@@ -22,6 +22,7 @@ namespace bot.service.trader
         private Timer _timer;
         private readonly ManualResetEvent _runCompleteEvent = new ManualResetEvent(false);
         private UnityContainer _container;
+        private IFileService _fileService;
 
         public Trader()
         {
@@ -36,6 +37,7 @@ namespace bot.service.trader
             _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
+            _fileService = _container.Resolve<IFileService>();
         }
 
         protected override void OnStart(string[] args)
@@ -50,17 +52,36 @@ namespace bot.service.trader
             try
             {
                 var configRepository = _container.Resolve<IConfigRepository>();
+                Config config = null;
                 configRepository.Get("kraken").ContinueWith(configResponse =>
                 {
-                    _container.RegisterInstance(configResponse.Result);
+                    config = configResponse.Result;
 
-                    _timer.Interval = configResponse.Result.LoadIntervalMinutes * 60 * 1000;
-                    var tradeService = _container.Resolve<ITradeService>();
-                    tradeService.Trade().Wait(new TimeSpan(0, 0, 3));
+                }).Wait();
+                if (config == null)
+                {
+                    _fileService.Write($"{DateTime.Now:G} Config wasn't loaded");
+                    return;
+                }
+                _container.RegisterInstance(config);
+                
+                var tradeService = _container.Resolve<ITradeService>();
+                tradeService.Trade().ContinueWith(task =>
+                {
+                    if (task.Exception != null)
+                    {
+                        _fileService.Write($"{DateTime.Now:G} {task.Exception.Message}");
+                        _fileService.Write(task.Exception.StackTrace);
+                    }
+                }).Wait(new TimeSpan(0, 0, 3));
 
-                }).Wait(new TimeSpan(0, 0, 4));
+                _timer.Interval = config.LoadIntervalMinutes * 60 * 1000;
 
-              
+            }
+            catch (Exception ex)
+            {
+                _fileService.Write($"{DateTime.Now:G} {ex.Message}");
+                _fileService.Write(ex.StackTrace);
             }
             finally
             {

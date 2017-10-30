@@ -4,5 +4,6 @@
     {
         public const string Load = "load";
         public const string StatusUpdate = "trade status update";
+        public const string Trade = "trade";
     }
 }
