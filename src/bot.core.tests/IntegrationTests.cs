@@ -32,6 +32,7 @@ namespace bot.core.tests
             _container.RegisterInstance(Substitute.For<ILogRepository>());
             _container.RegisterInstance(Substitute.For<ITradeRepository>());
             _container.RegisterInstance(Substitute.For<INotSoldRepository>());
+            _container.RegisterInstance(Substitute.For<IFileService>());
             _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
 
             _eventRepository = _container.Resolve<IEventRepository>();
@@ -126,14 +127,28 @@ namespace bot.core.tests
             _exchangeClient.GetBaseCurrencyBalance().Returns(Task.FromResult(balance));
         }
 
+        private void SetFile()
+        {
+            var fileName = $"h:\\simulator_log_{DateTime.Now:yyMMddhhmmss}.txt";
+            var fileService = _container.Resolve<IFileService>();
+            var dateTime = _container.Resolve<IDateTime>();
+            fileService.When(x => x.Write(Arg.Any<string>())).Do(d =>
+              {
+                  using (var file = new System.IO.StreamWriter(fileName, true))
+                  {
+                      file.WriteLine($"{dateTime.Now:G}| {d.Args()[0]}");
+                      file.Close();
+                  }
 
+              });
+        }
 
         private void SetupNotSold(Action<BalanceItem> action)
         {
             var nosSoldRespo = _container.Resolve<INotSoldRepository>();
             var balanceRepository = _container.Resolve<IBalanceRepository>();
             nosSoldRespo.When(x => x.SetNotSold(Arg.Any<string>(), Arg.Any<string>()))
-                .Do(async d => { action((await balanceRepository.Get("","")).First()); });
+                .Do(async d => { action((await balanceRepository.Get("", "")).First()); });
         }
 
         private void SetEthBalance(decimal volume, decimal price, int notSold)
@@ -172,12 +187,13 @@ namespace bot.core.tests
         [Test]
         public async Task RunSimulator()
         {
-            var dateTime = DateTime.Now.AddHours(-100);
+            var dateTime = DateTime.Now.AddHours(-20);
             await TradeSimulator(dateTime, DateTime.Now);
         }
 
         private async Task TradeSimulator(DateTime start, DateTime end)
         {
+            
             var file = Write("simulator", true, "Time,Status,ETH,Price,USD balance");
             await SetConfig();
             var currentStatus = TradeStatus.Unknown;
@@ -187,18 +203,21 @@ namespace bot.core.tests
             var ethBalance = decimal.Zero;
             var usdBalance = 65m;
             var lastSellPrice = decimal.Zero;
+            SetFile();
+            var fileService = _container.Resolve<IFileService>();
+            fileService.Write(config.ToString());
             SetUsdBalance(usdBalance);
             SetEthBalance(0, 0, 0);
             SetCurrentStatus(currentStatus);
             await SetupTradeService(start, end);
             var currentTime = start;
 
-            SetupNotSold( item =>
-            {
-                notSold = notSold + 1;
-                SetEthBalance(item.Volume, item.Price, notSold);
-                Write(file, false, $"{currentTime:s},not sold,{ethBalance},-,{notSold}");
-            });
+            SetupNotSold(item =>
+           {
+               notSold = notSold + 1;
+               SetEthBalance(item.Volume, item.Price, notSold);
+               Write(file, false, $"{currentTime:s},not sold,{ethBalance},-,{notSold}");
+           });
 
             SetupExchangeService(OrderType.buy, (vol, pr) =>
             {

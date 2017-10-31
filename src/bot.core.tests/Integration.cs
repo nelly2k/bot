@@ -31,7 +31,7 @@ namespace bot.core.tests
 
             var config = await configRepo.Get();
 
-            _dt = DateTime.Now.AddHours(-50);
+            _dt = DateTime.Now.AddHours(-18);
             var trades = (await _tradeRepository.LoadTrades(AltName, _dt)).ToList();
             var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
             var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();

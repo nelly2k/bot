@@ -46,7 +46,7 @@ namespace bot.core
         public async Task CheckOpenOrders(IExchangeClient client)
         {
             var openOrders = await _orderRepository.Get(client.Platform);
-            if (!openOrders.Any())
+            if (openOrders==null || !openOrders.Any())
             {
                 return;
             }

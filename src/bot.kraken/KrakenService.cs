@@ -162,7 +162,8 @@ namespace bot.kraken
                 var item = new OrderInfo();
                 item.Id = order.Key;
                 item.Status = Convert.ToString(details["status"]).ToEnum<KrakenOrderStatus>();
-                item.Reason = Convert.ToString(details["reason"]);
+                Set("reason", details, o=>item.Reason = Convert.ToString(o));
+                //TODO make it so
                 item.Pair = Convert.ToString(desc["pair"]);
                 item.OrderType = Convert.ToString(desc["type"]).ToEnum<OrderType>();
                 item.OrderPriceType = Convert.ToString(desc["ordertype"]).ToEnum<OrderPriceType>();
@@ -178,6 +179,14 @@ namespace bot.kraken
                 result.Add(item);
             }
             return result;
+        }
+
+        private void Set(string name, Dictionary<string, object> details, Action<object> setAction)
+        {
+            if (details.ContainsKey("reason"))
+            {
+                setAction(details[name]);
+            }
         }
 
         public async Task<List<OrderInfo>> GetOrdersInfo(params string[] orderIds)

@@ -69,7 +69,8 @@ namespace bot.core
             var groupedTradesSlow = trades.GroupAll(_config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
 
             var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow);
-            Console.WriteLine($"{DateTime.Now:G} Status: {newStatus}");
+            _fileService.Write($"[buy price: {groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceBuyAvg}]" +
+                               $" [sell price: {groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceSellAvg}]");
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;
@@ -96,11 +97,14 @@ namespace bot.core
         public async Task<TradeStatus> GetCurrentStatus(string platform)
         {
             var currentStatusStr = await _eventRepository.GetLastEventValue(platform, $"{EventConstant.StatusUpdate} {Pair}");
-            return (TradeStatus)Enum.Parse(typeof(TradeStatus), currentStatusStr);
+            var status =  (TradeStatus)Enum.Parse(typeof(TradeStatus), currentStatusStr);
+            _fileService.Write($"Get status for [platform:{platform}] [new status:{status}]");
+            return status;
         }
 
         public async Task SetCurrentStatus(string platform,TradeStatus tradeStatus)
         {
+            _fileService.Write($"Set status for [platform:{platform}] [new status:{tradeStatus}]");
             await _eventRepository.UpdateLastEvent(platform, $"{EventConstant.StatusUpdate} {Pair}",
                 tradeStatus.ToString());
         }
@@ -108,14 +112,27 @@ namespace bot.core
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow)
         {
             var macd = groupedTrades.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast, _config.AnalyseMacdSignal).MacdAnalysis();
+            _fileService.Write($"MACD Fast [cross type:{macd.CrossType.ToString()}] [means: {(macd.CrossType== CrossType.MacdFalls?"Sell": "Buy")}] [at:{macd.Trade.DateTime:G}] [since:{(int)(_dateTime.Now - macd.Trade.DateTime).TotalMinutes}]");
             var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config.AnalyseRsiEmaPeriods)
                 .GetPeaks(_config.AnalyseRsiLow, _config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                 .FirstOrDefault();
-
+            if (rsiLastPeak != null)
+            {
+                _fileService.Write(
+                    $"RSI Last peak [peak type:{rsiLastPeak.PeakType.ToString()}] [means: {(rsiLastPeak.PeakType == PeakType.High ? "Sell" : "Buy")}] [at:{rsiLastPeak.ExitTrade.DateTime:G}] [since:{(int)(_dateTime.Now - rsiLastPeak.ExitTrade.DateTime).TotalMinutes}]");
+            }
+            else
+            {
+                _fileService.Write("No RSI Peaks found");
+            }
+            
             var macdSlow = groupedTradesSlow.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast,
                 _config.AnalyseMacdSignal).MacdSlowAnalysis();
+            _fileService.Write($"MACD Slow [trade status:{macdSlow.ToString()}]");
 
-            return AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlow);
+            var status= AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlow);
+            _fileService.Write($"Analysis [trade status:{status.ToString()}]");
+            return status;
         }
     }
 }
