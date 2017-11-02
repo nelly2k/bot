@@ -18,7 +18,7 @@ namespace bot.core
                 cmd.CommandText =
                     @"update balance 
                       set notSoldCounter = notSoldCounter + 1, notSoldDate = getdate()
-                      where platform=@platform and name=@pair";
+                      where platform=@platform and name=@pair and isDeleted=0";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);

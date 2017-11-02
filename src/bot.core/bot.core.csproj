@@ -61,6 +61,7 @@
     <Compile Include="DateTimeService.cs" />
     <Compile Include="EventRepository.cs" />
     <Compile Include="LogRepository.cs" />
+    <Compile Include="MailService.cs" />
     <Compile Include="MoneyService.cs" />
     <Compile Include="NotSoldRepository.cs" />
     <Compile Include="OrderRepository.cs" />

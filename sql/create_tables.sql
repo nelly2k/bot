@@ -51,11 +51,11 @@ insert into config values ('kraken', 'api_key','')
 insert into config values ('kraken', 'api_secret','')
 insert into config values ('kraken', 'max_missed_sells',3)
 insert into config values ('kraken', 'pair_percent','ETHUSD|80')
-insert into config values ('kraken', 'min_buy_usd',2)
 insert into config values ('kraken', 'base_currency','ZUSD')
 insert into config values ('kraken', 'analyse_amcd_group_perios_minutes_slow',20)
 insert into config values ('kraken', 'pair_load','ETHUSD')
 insert into config values ('kraken', 'pair_load','XBTUSD')
+insert into config values ('kraken', 'min_volume','ETHUSD|0.02');
 
 ALTER table config
 add constraint pk_config PRIMARY KEY (platform, name, value)

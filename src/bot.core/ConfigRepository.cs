@@ -25,7 +25,6 @@ namespace bot.core
             {"analyse_rsi_ema_periods", (c, v) => c.AnalyseRsiEmaPeriods = Convert.ToInt32(v)},
             {"analyse_rsi_low", (c, v) => c.AnalyseRsiLow = Convert.ToInt32(v)},
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
-            {"min_buy_usd", (c, v) => c.MinBuyBaseCurrency = Convert.ToInt32(v)},
             {"base_currency", (c, v) => c.BaseCurrency = v.ToString()},
             {"analyse_macd_slow_threshold", (c, v) => c.AnalyseMacdSlowThreshold = Convert.ToDecimal(v)},
             { "pair_load", (c, v) =>
@@ -36,6 +35,12 @@ namespace bot.core
                 {
                     var p = v.ToString().Split('|');
                     c.PairPercent.Add(p[0], Convert.ToDouble(p[1]));
+                }
+            },
+            {"min_volume", (c, v) =>
+                {
+                    var p = v.ToString().Split('|');
+                    c.MinVolume.Add(p[0], Convert.ToDecimal(p[1]));
                 }
             },
             {"api_key", (c, v) => c.Key = v.ToString()},

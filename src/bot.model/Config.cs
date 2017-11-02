@@ -24,6 +24,7 @@ namespace bot.model
         public List<string> PairToLoad { get; set; } = new List<string>();
 
         public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, decimal> MinVolume { get; set; } = new Dictionary<string, decimal>();
 
         public string Key{ get; set; } 
         public string Secret{ get; set; } 
