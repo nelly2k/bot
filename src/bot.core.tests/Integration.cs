@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Runtime.Remoting.Channels;
 using System.Threading.Tasks;
 using bot.core.Extensions;
-using bot.model;
-using Combinatorics.Collections;
 using NUnit.Framework;
 
 namespace bot.core.tests
@@ -15,7 +11,7 @@ namespace bot.core.tests
     {
         private TradeRepository _tradeRepository;
         private DateTime _dt;
-        private const string AltName = "XETHZUSD";
+        private const string AltName = "XBTUSD";
 
         [SetUp]
         public void Setup()
@@ -30,14 +26,14 @@ namespace bot.core.tests
             var configRepo = new ConfigRepository();
 
             var config = await configRepo.Get();
-
-            _dt = DateTime.Now.AddHours(-18);
+            config.AnalyseGroupPeriodMinutes = 10;
+            _dt = DateTime.Now.AddHours(-5);
             var trades = (await _tradeRepository.LoadTrades(AltName, _dt)).ToList();
             var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
             var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
             var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
             
-            var grouped2 = trades.GroupAll(30, GroupBy.Minute).ToList();
+            var grouped2 = trades.GroupAll(config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList();
             var macd2 = grouped2.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
 
             var lines = (from m in macd
@@ -51,88 +47,7 @@ namespace bot.core.tests
 
             Write("macd_rsi", lines);
         }
-
-        //[Test]
-        //public async Task RunOneTrail()
-        //{
-        //    var startFall = new DateTime(2017, 10, 07, 00, 0, 0);
-        //    var end = new DateTime(2017, 10, 08, 8, 00, 0);
-        //    var db = new TradeRepository();
-        //    var config = await db.GetConfig();
-
-        //    var result = await RunConfigTrail(config, 65m, startFall, end);
-
-        //}
-
-        //[Test]
-        //public async Task RunTrail()
-        //{
-        //    var initialUsd = 65m;
-        //    var filename= Write("full_trail", true,"Type,LoadInterval,LoadHours,GroupPeriod,Treshold,MacdSlow,MacdFast,MacdSignal,RsiPeriods,RsiLow,RsiHigh,Amount,Buys,Sells");
-        //    var config = new Config();
-
-        //    var values = new Dictionary<string, int[]>()
-        //    {
-        //        {nameof(config.LoadIntervalMinutes),new []{3,5,7}},
-        //        {nameof(config.AnalyseGroupPeriodMinutes),new []{3,4,5}},
-        //        {nameof(config.AnalyseTresholdMinutes),new []{10,20,30} },
-        //        {nameof(config.AnalyseMacdSlow),new []{20,26,30} },
-        //        {nameof(config.AnalyseMacdFast),new []{10,12,15} },
-        //        {nameof(config.AnalyseMacdSignal),new []{5,9,10} },
-        //        {nameof(config.AnalyseRsiEmaPeriods),new []{8,14,16} },
-        //        {nameof(config.AnalyseRsiLow),new []{20,30,35} },
-        //        {nameof(config.AnalyseRsiHigh),new []{80,70,65} },
-        //    };
-
-        //    var start = new DateTime(2017, 9, 29, 15, 0, 0);
-        //    var endRise = new DateTime(2017, 9, 30, 23, 0, 0);
-        //    var end = new DateTime(2017, 10, 05, 8, 00, 0);
-
-        //    var allConfigurations = from AnalyseGroupPeriodMinutes in values[nameof(config.AnalyseGroupPeriodMinutes)]
-        //                            from LoadIntervalMinutes in values[nameof(config.LoadIntervalMinutes)]
-        //                            from AnalyseTresholdMinutes in values[nameof(config.AnalyseTresholdMinutes)]
-        //                            from AnalyseMacdSlow in values[nameof(config.AnalyseMacdSlow)]
-        //                            from AnalyseMacdFast in values[nameof(config.AnalyseMacdFast)]
-        //                            from AnalyseMacdSignal in values[nameof(config.AnalyseMacdSignal)]
-        //                            from AnalyseRsiEmaPeriods in values[nameof(config.AnalyseRsiEmaPeriods)]
-        //                            from AnalyseRsiLow in values[nameof(config.AnalyseRsiLow)]
-        //                            from AnalyseRsiHigh in values[nameof(config.AnalyseRsiHigh)]
-        //                            select new Config()
-        //                            {
-        //                                AnalyseGroupPeriodMinutes = AnalyseGroupPeriodMinutes,
-        //                                AnalyseTresholdMinutes = AnalyseTresholdMinutes,
-        //                                AnalyseMacdSlow = AnalyseMacdSlow,
-        //                                AnalyseMacdFast = AnalyseMacdFast,
-        //                                AnalyseMacdSignal = AnalyseMacdSignal,
-        //                                AnalyseRsiEmaPeriods = AnalyseRsiEmaPeriods,
-        //                                AnalyseRsiLow = AnalyseRsiLow,
-        //                                AnalyseRsiHigh = AnalyseRsiHigh,
-        //                                LoadIntervalMinutes = LoadIntervalMinutes,
-        //                            };
-
-
-        //    foreach (var configValue in allConfigurations)
-        //    {
-        //        await Item("All", initialUsd, configValue, start, end, str=>Write(filename, false,str));
-        //        await Item("Rise", initialUsd, configValue, start, endRise, str => Write(filename, false, str));
-        //        await Item("Fall", initialUsd, configValue, endRise, end, str => Write(filename, false, str));
-        //    }
-        //}
-
-        //private async Task Item(string type, decimal initialUsd, Config config, DateTime start, DateTime end, Action<string> add)
-        //{
-        //    try
-        //    {
-        //        var trail = await RunConfigTrail(config, initialUsd, start, end);
-        //        add(GetLine(type, initialUsd, config, trail));
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e);
-        //    }
-
-        //}
-
+        
         [Test]
         public async Task AllTogetherCertainPeriod()
         {
@@ -159,9 +74,7 @@ namespace bot.core.tests
             lines.Insert(0, "Date,RSI,MACD,Signal,Volume,PriceAvg,PriceMin,PriceMax,MACD_Anal,RSI_Anal");
 
             Write("macd_rsi_period", lines);
-           // var newStatus = AnalysisExtensions.AnalyseIndeces(20, end, macdAnal, rsiLastPeak);
-
-         //   Assert.That(newStatus, Is.EqualTo(TradeStatus.Sell));
+           
         }
 
         private static string Mark(MacdAnalysisResult macd, PeakAnalysisResult rsi, DateTime dt)

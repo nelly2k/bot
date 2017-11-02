@@ -8,7 +8,7 @@ namespace bot.model
         public int LoadIntervalMinutes { get; set; } = 3;
         public int AnalyseLoadHours { get; set; } = 12;
         public int AnalyseGroupPeriodMinutes { get; set; } = 4;
-        public int AnalyseMacdGroupPeriodMinutesSlow { get; set; } = 4;
+        public int AnalyseMacdGroupPeriodMinutesSlow { get; set; } = 20;
         public int AnalyseTresholdMinutes { get; set; } = 30;
         public int AnalyseMacdSlow { get; set; } = 26;
         public int AnalyseMacdFast { get; set; } = 12;
@@ -19,6 +19,9 @@ namespace bot.model
         public int MinBuyBaseCurrency{ get; set; } = 2;
         public int MaxMissedSells { get; set; } = 3;
         public string BaseCurrency { get; set; } = "ZUSD";
+        public decimal AnalyseMacdSlowThreshold { get; set; } = 0m;
+
+        public List<string> PairToLoad { get; set; } = new List<string>();
 
         public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();
 

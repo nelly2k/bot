@@ -36,14 +36,31 @@ namespace bot.core.Extensions
             return TradeStatus.Unknown;
         }
 
-        public static TradeStatus MacdSlowAnalysis(this IEnumerable<MacdResultItem> macd)
+        public static TradeStatus MacdSlowAnalysis(this IEnumerable<MacdResultItem> macd, decimal threshold = 0.0m)
         {
-            var last = macd.OrderByDescending(x => x.DateTime).Take(3).ToList();
-            if (last.All(x => x.Macd > x.Signal || Math.Abs(x.Macd - x.Signal) < 0.00m))
+            var lastThree = macd.OrderByDescending(x => x.DateTime).Take(3).ToArray();
+            var last = lastThree.First();
+
+            if (last.Macd >= last.Signal || Math.Abs(last.Macd - last.Signal) <= threshold)
             {
                 return TradeStatus.Buy;
             }
-            return TradeStatus.Unknown;
+
+            var sum = Math.Abs(last.Macd - last.Signal);
+            for (var i = 1; i < 3; i++)
+            {
+                var next = Math.Abs(lastThree[i].Macd - lastThree[i].Signal);
+                if (sum < next)
+                {
+                    sum = next;
+                }
+                else
+                {
+                    return TradeStatus.Unknown;
+                }
+            }
+
+            return TradeStatus.Buy;
         }
 
         public static MacdAnalysisResult MacdAnalysis(this IEnumerable<MacdResultItem> macd)

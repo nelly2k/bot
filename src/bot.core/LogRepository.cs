@@ -12,6 +12,10 @@ namespace bot.core
     {
         public async Task Log(string platform, string status, string what)
         {
+            if (string.IsNullOrEmpty(what))
+            {
+                return;
+            }
             await Execute(async cmd =>
             {
                 cmd.CommandText = @"INSERT INTO [dbo].[log]

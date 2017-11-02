@@ -45,6 +45,7 @@ namespace bot.service.trader
             _timer = new Timer(_container.Resolve<Config>().LoadIntervalMinutes * 60 * 1000);
             _timer.Elapsed += Timer_Elapsed;
             _timer.Start();
+            Timer_Elapsed(null, null);
         }
 
         void Timer_Elapsed(object sender, EventArgs e)
@@ -60,7 +61,7 @@ namespace bot.service.trader
                 }).Wait();
                 if (config == null)
                 {
-                    _fileService.Write($"{DateTime.Now:G} Config wasn't loaded");
+                    _fileService.Write("error",$"{DateTime.Now:G} Config wasn't loaded");
                     return;
                 }
                 _container.RegisterInstance(config);
@@ -70,8 +71,8 @@ namespace bot.service.trader
                 {
                     if (task.Exception != null)
                     {
-                        _fileService.Write($"{DateTime.Now:G} {task.Exception.Message}");
-                        _fileService.Write(task.Exception.StackTrace);
+                        _fileService.Write("error", $"{DateTime.Now:G} {task.Exception.Message}");
+                        _fileService.Write("error", task.Exception.StackTrace);
                     }
                 }).Wait(new TimeSpan(0, 0, 3));
 
@@ -80,8 +81,8 @@ namespace bot.service.trader
             }
             catch (Exception ex)
             {
-                _fileService.Write($"{DateTime.Now:G} {ex.Message}");
-                _fileService.Write(ex.StackTrace);
+                _fileService.Write("error", $"{DateTime.Now:G} {ex.Message}");
+                _fileService.Write("error", ex.StackTrace);
             }
             finally
             {

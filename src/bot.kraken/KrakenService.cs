@@ -238,6 +238,10 @@ namespace bot.kraken
             if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
 
             var serverResponse = await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
+            if (serverResponse.Error != null && serverResponse.Error.Any())
+            {
+                throw new Exception($"Kraken returned error: {string.Join(Environment.NewLine, serverResponse.Error)}");
+            }
             return serverResponse.Result;
         }
 
@@ -260,8 +264,13 @@ namespace bot.kraken
 
             var response = await client.PostAsync(uri, content);
             if (!response.IsSuccessStatusCode) throw new Exception($"Request is unsuccessful.");
-            var str = await response.Content.ReadAsStringAsync();
+            
+            //var str = await response.Content.ReadAsStringAsync();
             var serverResponse = await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
+            if (serverResponse.Error != null && serverResponse.Error.Any())
+            {
+                throw new Exception($"Kraken returned error: {string.Join(Environment.NewLine, serverResponse.Error)}");
+            }
             return serverResponse.Result;
         }
 

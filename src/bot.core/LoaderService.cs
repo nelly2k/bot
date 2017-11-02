@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Threading.Tasks;
 using bot.model;
 
@@ -6,61 +7,51 @@ namespace bot.core
 {
     public interface ILoaderService:IService
     {
-        Task<Config> Load();
+        Task Load();
     }
 
     public class LoaderService : ILoaderService
     {
-        private const string Pair = "ETHUSD";
         private readonly ITradeRepository _tradeRepository;
         private readonly IExchangeClient[] _clients;
-        private readonly IConnectivityService _connectivityService;
         private readonly IEventRepository _eventRepository;
-        private readonly IConfigRepository _configRepository;
         private readonly ILogRepository _logRepository;
+        private readonly Config _config;
 
-        public LoaderService(ITradeRepository tradeRepository, IExchangeClient[] clients, IConnectivityService connectivityService,
-            IEventRepository eventRepository,IConfigRepository configRepository, ILogRepository logRepository)
+        public LoaderService(ITradeRepository tradeRepository, IExchangeClient[] clients,
+            IEventRepository eventRepository,ILogRepository logRepository, Config config )
         {
             _tradeRepository = tradeRepository;
             _clients = clients;
-            _connectivityService = connectivityService;
             _eventRepository = eventRepository;
-            _configRepository = configRepository;
             _logRepository = logRepository;
+            _config = config;
         }
 
-        public async Task<Config> Load()
+        public async Task Load()
         {
-            try
-            {
-                _connectivityService.CheckForInternetConnection();
-            }
-            catch (Exception)
-            {
-                var config = await _configRepository.Get();
-                config.LoadIntervalMinutes = 10;
-                return config;
-            }
+            var pairs = _config.PairToLoad;
 
-            var eventName = $"{EventConstant.Load} {Pair}";
-            foreach (var client in _clients)
+            foreach (var pair in pairs)
             {
-                try
-                {            
-                    var lastId = await _eventRepository.GetLastEventValue(client.Platform, eventName);
-                    var getTradesReasult = await client.GetTrades(lastId, Pair);
-                    await _tradeRepository.SaveTrades(getTradesReasult.Results);
-                    await _eventRepository.UpdateLastEvent(client.Platform, eventName, getTradesReasult.LastId);
-                }
-                catch (Exception e)
+                var eventName = $"{EventConstant.Load} {pair}";
+                foreach (var client in _clients)
                 {
-                    await _logRepository.Log(client.Platform, $"Error {eventName}", e.Message);
-                    await _logRepository.Log(client.Platform, $"Error {eventName}", e.StackTrace);
+                    try
+                    {
+                        var lastId = await _eventRepository.GetLastEventValue(client.Platform, eventName);
+                        var getTradesReasult = await client.GetTrades(lastId, pair);
+                        await _tradeRepository.SaveTrades(getTradesReasult.Results, pair);
+                        await _eventRepository.UpdateLastEvent(client.Platform, eventName, getTradesReasult.LastId);
+                    }
+                    catch (Exception e)
+                    {
+                        await _logRepository.Log(client.Platform, $"Error {eventName}", e.Message);
+                        await _logRepository.Log(client.Platform, $"Error {eventName}", e.StackTrace);
+                    }
                 }
             }
-
-            return await _configRepository.Get();
+           
         }
     }
 }

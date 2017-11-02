@@ -11,7 +11,7 @@ namespace bot.core
     public interface ITradeRepository:IService
     {
         Task<IEnumerable<BaseTrade>> LoadTrades(string altname, DateTime since, DateTime? to = null);
-        Task SaveTrades(List<ITrade> trades);
+        Task SaveTrades(List<ITrade> trades, string pair);
     }
 
     public class TradeRepository : ITradeRepository
@@ -68,7 +68,7 @@ namespace bot.core
             }
         }
 
-        public async Task SaveTrades(List<ITrade> trades)
+        public async Task SaveTrades(List<ITrade> trades, string pair)
         {
             using (var con = new SqlConnection(_connectionString))
             {
@@ -93,7 +93,7 @@ namespace bot.core
                 {
                     using (var command = new SqlCommand(commandText, con))
                     {
-                        command.Parameters.AddWithValue("@altname", trade.PairName);
+                        command.Parameters.AddWithValue("@altname", pair);
                         command.Parameters.AddWithValue("@price", trade.Price);
                         command.Parameters.AddWithValue("@volume", trade.Volume);
                         command.Parameters.AddWithValue("@tradeTime", trade.DateTime);

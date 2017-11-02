@@ -22,9 +22,10 @@ namespace bot.core
         private readonly ILogRepository _logRepository;
         private readonly IMoneyService _moneyService;
         private readonly INotSoldRepository _notSoldRepository;
+        private readonly IFileService _fileService;
 
         public OrderService(IOrderRepository orderRepository, IExchangeClient[] clients, IBalanceRepository balanceRepository, Config config,
-            ILogRepository logRepository, IMoneyService moneyService, INotSoldRepository notSoldRepository)
+            ILogRepository logRepository, IMoneyService moneyService, INotSoldRepository notSoldRepository, IFileService fileService)
         {
             _orderRepository = orderRepository;
             _clients = clients;
@@ -33,6 +34,7 @@ namespace bot.core
             _logRepository = logRepository;
             _moneyService = moneyService;
             _notSoldRepository = notSoldRepository;
+            _fileService = fileService;
         }
 
         public async Task CheckOpenOrders()
@@ -82,10 +84,12 @@ namespace bot.core
             List<string> orderIds;
             if (isMarket)
             {
+                _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}]");
                 orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair:pair);
             }
             else
             {
+                _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
                 orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price, pair: pair);
             }
 
@@ -106,7 +110,7 @@ namespace bot.core
 
             foreach (var balanceItem in balanceItems)
             {
-                var boughtPrice = balanceItem.Volume * balanceItem.Price + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.16m);
+                var boughtPrice = balanceItem.Volume * balanceItem.Price + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
                 var sellPrice = balanceItem.Volume * price +
                                 _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
 
@@ -116,6 +120,7 @@ namespace bot.core
                 }
                 else
                 {
+                    _fileService.Write(pair, $"Not worths to sell [not sold: {balanceItem.NotSold}");
                     await _notSoldRepository.SetNotSold(client.Platform, pair);
                 }
             }
@@ -127,10 +132,13 @@ namespace bot.core
             List<string> orderIds;
             if (isMarket)
             {
+
+                _fileService.Write(pair, $"Sell [volume:{volume}] [price:{price}]");
                 orderIds = await client.AddOrder(OrderType.sell, volume, pair: pair);
             }
             else
             {
+                _fileService.Write(pair, $"Sell [volume:{volume}]");
                 orderIds = await client.AddOrder(OrderType.sell, volume, price, pair: pair);
             }
             await _logRepository.Log(client.Platform, "Trade",

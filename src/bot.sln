@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.model", "bot.model\bot.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.tests", "bot.core.tests\bot.core.tests.csproj", "{FE50E5C4-8EDF-4688-ADAF-DE9CFA4B3F03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.trading", "bot.core.trading\bot.core.trading.csproj", "{432A07C1-F082-4C90-96FC-A1B857683E50}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.loader", "bot.service.loader\bot.service.loader.csproj", "{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.trader", "bot.service.trader\bot.service.trader.csproj", "{B843E8AF-7A4B-4996-94DF-6BF45E88A4B1}"
@@ -47,10 +45,6 @@ Global
 		{FE50E5C4-8EDF-4688-ADAF-DE9CFA4B3F03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE50E5C4-8EDF-4688-ADAF-DE9CFA4B3F03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE50E5C4-8EDF-4688-ADAF-DE9CFA4B3F03}.Release|Any CPU.Build.0 = Release|Any CPU
-		{432A07C1-F082-4C90-96FC-A1B857683E50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{432A07C1-F082-4C90-96FC-A1B857683E50}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{432A07C1-F082-4C90-96FC-A1B857683E50}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{432A07C1-F082-4C90-96FC-A1B857683E50}.Release|Any CPU.Build.0 = Release|Any CPU
 		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU

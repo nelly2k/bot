@@ -41,6 +41,7 @@ insert into config values ('kraken', 'analyse_load_hours', 12)
 insert into config values ('kraken', 'analyse_group_period_minutes',3)
 insert into config values ('kraken', 'analyse_treshold_minutes',10)
 insert into config values ('kraken', 'analyse_macd_slow',20)
+insert into config values ('kraken', 'analyse_macd_slow_threshold',0.00)
 insert into config values ('kraken', 'analyse_macd_fast',10)
 insert into config values ('kraken', 'analyse_macd_signal',5)
 insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
@@ -49,9 +50,15 @@ insert into config values ('kraken', 'analyse_rsi_high',70)
 insert into config values ('kraken', 'api_key','')
 insert into config values ('kraken', 'api_secret','')
 insert into config values ('kraken', 'max_missed_sells',3)
-insert into config values ('kraken', 'pair_percent','XETHZUSD|60')
-insert into config values ('kraken', 'min_buy_usd','2')
-insert into config values ('kraken', 'base_currency','USD')
+insert into config values ('kraken', 'pair_percent','ETHUSD|80')
+insert into config values ('kraken', 'min_buy_usd',2)
+insert into config values ('kraken', 'base_currency','ZUSD')
+insert into config values ('kraken', 'analyse_amcd_group_perios_minutes_slow',20)
+insert into config values ('kraken', 'pair_load','ETHUSD')
+insert into config values ('kraken', 'pair_load','XBTUSD')
+
+ALTER table config
+add constraint pk_config PRIMARY KEY (platform, name, value)
 
 
 create table log(
@@ -88,8 +95,4 @@ create table openOrder(
 	id nvarchar(500),
 	isDeleted bit constraint df_openOrder_isDelete default (0)
 )
-
-
-drop table balance
-drop table openOrder
 

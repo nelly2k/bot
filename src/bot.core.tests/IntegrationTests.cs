@@ -78,13 +78,6 @@ namespace bot.core.tests
             _eventRepository.GetLastEventValue(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(status.ToString()));
         }
 
-        private async Task SetConfig()
-        {
-            var repo = new ConfigRepository();
-            var config = await repo.Get();
-            _container.RegisterInstance<Config>(config);
-
-        }
         private void SetDate(DateTime dt)
         {
             var ser = _container.Resolve<IDateTime>();
@@ -108,9 +101,9 @@ namespace bot.core.tests
         {
             var tradeSer = _container.Resolve<ITradeService>();
             SetCurrentStatus(TradeStatus.Buy);
-            Assert.That(await tradeSer.GetCurrentStatus(""), Is.EqualTo(TradeStatus.Buy));
+            Assert.That(await tradeSer.GetCurrentStatus("",""), Is.EqualTo(TradeStatus.Buy));
             SetCurrentStatus(TradeStatus.Sell);
-            Assert.That(await tradeSer.GetCurrentStatus(""), Is.EqualTo(TradeStatus.Sell));
+            Assert.That(await tradeSer.GetCurrentStatus("", ""), Is.EqualTo(TradeStatus.Sell));
 
         }
 
@@ -131,12 +124,11 @@ namespace bot.core.tests
         {
             var fileName = $"h:\\simulator_log_{DateTime.Now:yyMMddhhmmss}.txt";
             var fileService = _container.Resolve<IFileService>();
-            var dateTime = _container.Resolve<IDateTime>();
-            fileService.When(x => x.Write(Arg.Any<string>())).Do(d =>
+            fileService.When(x => x.Write(Arg.Any<string>(),Arg.Any<string>())).Do(d =>
               {
                   using (var file = new System.IO.StreamWriter(fileName, true))
                   {
-                      file.WriteLine($"{dateTime.Now:G}| {d.Args()[0]}");
+                      file.WriteLine(d.Args()[1]);
                       file.Close();
                   }
 
@@ -187,10 +179,20 @@ namespace bot.core.tests
         [Test]
         public async Task RunSimulator()
         {
-            var dateTime = DateTime.Now.AddHours(-20);
+            var dateTime = DateTime.Now.AddHours(-60);
             await TradeSimulator(dateTime, DateTime.Now);
         }
 
+        private async Task SetConfig()
+        {
+            var repo = new ConfigRepository();
+            var config = await repo.Get();
+            config.AnalyseMacdSlowThreshold = 0.00m;
+            config.AnalyseGroupPeriodMinutes = 10;
+            config.MaxMissedSells = 6;
+            _container.RegisterInstance<Config>(config);
+
+        }
         private async Task TradeSimulator(DateTime start, DateTime end)
         {
             
@@ -205,7 +207,7 @@ namespace bot.core.tests
             var lastSellPrice = decimal.Zero;
             SetFile();
             var fileService = _container.Resolve<IFileService>();
-            fileService.Write(config.ToString());
+            fileService.Write("",config.ToString());
             SetUsdBalance(usdBalance);
             SetEthBalance(0, 0, 0);
             SetCurrentStatus(currentStatus);

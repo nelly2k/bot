@@ -16,6 +16,7 @@ namespace bot.service.loader
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly ManualResetEvent _runCompleteEvent = new ManualResetEvent(false);
         private UnityContainer _container;
+        private IFileService _fileService;
 
         public Loader()
         {
@@ -30,6 +31,7 @@ namespace bot.service.loader
             _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
+            _fileService = _container.Resolve<IFileService>();
         }
 
         protected override void OnStart(string[] args)
@@ -51,13 +53,23 @@ namespace bot.service.loader
         {
             try
             {
-               var loaderService =  _container.Resolve<ILoaderService>();
-                loaderService.Load().ContinueWith(r =>
+                var configRepository = _container.Resolve<IConfigRepository>();
+                Config config = null;
+                configRepository.Get("kraken").ContinueWith(configResponse =>
                 {
-                    _container.RegisterInstance(r.Result);
-                    _timer.Interval = _container.Resolve<Config>().LoadIntervalMinutes * 60 * 1000;
-                }).Wait(new TimeSpan(0,0,2));
-                
+                    config = configResponse.Result;
+
+                }).Wait();
+                if (config == null)
+                {
+                    _fileService.Write("loader",$"{DateTime.Now:G} Config wasn't loaded");
+                    return;
+                }
+                _container.RegisterInstance(config);
+
+                var loaderService =  _container.Resolve<ILoaderService>();
+                loaderService.Load().Wait(new TimeSpan(0,0,2));
+                _timer.Interval = config.LoadIntervalMinutes * 60 * 1000;
             }
             finally
             {
