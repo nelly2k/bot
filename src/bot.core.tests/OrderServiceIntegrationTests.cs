@@ -34,7 +34,7 @@ namespace bot.core.tests
         [Test]
         public async Task Buy()
         {
-            await _orderService.Buy(_exchangeClient, Pair, 296.09m, isMarket:true);
+            await _orderService.Buy(_exchangeClient, Pair, 296.09m);
         }
 
         [Test]
@@ -46,7 +46,7 @@ namespace bot.core.tests
         [Test]
         public async Task Sell()
         {
-            await _orderService.Sell(_exchangeClient, Pair, 297.80m, isMarket: true);
+            await _orderService.Sell(_exchangeClient, Pair, 297.80m);
         }
     }
 }

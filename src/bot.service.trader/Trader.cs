@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
 using System.ServiceProcess;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using bot.core;
 using bot.core.Extensions;
 using bot.kraken;
@@ -37,6 +30,7 @@ namespace bot.service.trader
             _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
+            _container.RegisterInstance<IRandom>(new MyRandom());
             _fileService = _container.Resolve<IFileService>();
         }
 
@@ -52,6 +46,7 @@ namespace bot.service.trader
         {
             try
             {
+                _timer.Stop();
                 var configRepository = _container.Resolve<IConfigRepository>();
                 Config config = null;
                 configRepository.Get("kraken").ContinueWith(configResponse =>
@@ -74,7 +69,8 @@ namespace bot.service.trader
                         _fileService.Write("error", $"{DateTime.Now:G} {task.Exception.Message}");
                         _fileService.Write("error", task.Exception.StackTrace);
                     }
-                }).Wait(new TimeSpan(0, 0, 3));
+                    _timer.Start();
+                }).Wait();
 
                 _timer.Interval = config.LoadIntervalMinutes * 60 * 1000;
 
@@ -87,6 +83,7 @@ namespace bot.service.trader
             finally
             {
                 _runCompleteEvent.Set();
+                _timer.Start();
             }
         }
     }

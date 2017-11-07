@@ -77,6 +77,15 @@ namespace bot.core.tests
            
         }
 
+        [Test]
+        public async Task LoadTradesTask()
+        {
+            var repo = new TradeRepository();
+            var result= await repo.LoadTrades("XBTUSD", new DateTime(2017, 11, 02, 11, 40, 00),
+                new DateTime(2017, 11, 03, 11, 40, 00));
+            Assert.That(result.Any(), Is.True);
+        }
+
         private static string Mark(MacdAnalysisResult macd, PeakAnalysisResult rsi, DateTime dt)
         {
             var macdVal = dt == macd.Trade.DateTime ? macd.Trade.Price.ToString() : "";

@@ -96,3 +96,8 @@ create table openOrder(
 	isDeleted bit constraint df_openOrder_isDelete default (0)
 )
 
+create table operation(
+	id int not null primary key identity,
+	platform  nvarchar(50),
+	isDeleted bit constraint dg_operation_isDelted default (0)
+)

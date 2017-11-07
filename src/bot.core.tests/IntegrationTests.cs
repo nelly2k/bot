@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using bot.model;
 using Microsoft.Practices.Unity;
@@ -86,13 +87,13 @@ namespace bot.core.tests
 
         private void SetupExchangeService(OrderType type, Action<decimal, decimal> setVolumePrice)
         {
-            _exchangeClient.When(x => x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<decimal>()))
+            _exchangeClient.When(x => x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>()))
                 .Do(x =>
                 {
-                    setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[2]));
+                    setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[3]));
                 });
 
-            _exchangeClient.AddOrder(Arg.Any<OrderType>(), Arg.Any<decimal>(), Arg.Any<decimal>())
+            _exchangeClient.AddOrder(Arg.Any<OrderType>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>())
                 .ReturnsForAnyArgs(new List<string>());
         }
 
@@ -160,11 +161,11 @@ namespace bot.core.tests
 
         private List<BaseTrade> trades { get; set; }
 
-        private async Task SetupTradeService(DateTime start, DateTime end)
+        private async Task SetupTradeService(string pair, DateTime start, DateTime end)
         {
             var real = new TradeRepository();
             var config = _container.Resolve<Config>();
-            trades = (await real.LoadTrades("XETHZUSD", start.AddHours(-config.AnalyseLoadHours), end)).ToList();
+            trades = (await real.LoadTrades(pair, start.AddHours(-config.AnalyseLoadHours), end)).ToList();
 
             var repo = _container.Resolve<ITradeRepository>();
             repo.LoadTrades(Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<DateTime>())
@@ -179,7 +180,7 @@ namespace bot.core.tests
         [Test]
         public async Task RunSimulator()
         {
-            var dateTime = DateTime.Now.AddHours(-60);
+            var dateTime = DateTime.Now.AddHours(-20);
             await TradeSimulator(dateTime, DateTime.Now);
         }
 
@@ -187,11 +188,11 @@ namespace bot.core.tests
         {
             var repo = new ConfigRepository();
             var config = await repo.Get();
-            config.AnalyseMacdSlowThreshold = 0.00m;
-            config.AnalyseGroupPeriodMinutes = 10;
-            config.MaxMissedSells = 6;
+            config.PairPercent.Remove("ETHUSD");
+            config.PairPercent.Add("XBTUSD", 90);
+            config.IsMarket = false;
             _container.RegisterInstance<Config>(config);
-
+            
         }
         private async Task TradeSimulator(DateTime start, DateTime end)
         {
@@ -211,7 +212,7 @@ namespace bot.core.tests
             SetUsdBalance(usdBalance);
             SetEthBalance(0, 0, 0);
             SetCurrentStatus(currentStatus);
-            await SetupTradeService(start, end);
+            await SetupTradeService(config.PairPercent.First().Key,start, end);
             var currentTime = start;
 
             SetupNotSold(item =>

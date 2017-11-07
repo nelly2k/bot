@@ -128,7 +128,9 @@
   <ItemGroup>
     <Compile Include="Integration.cs" />
     <Compile Include="IntegrationTests.cs" />
+    <Compile Include="OperationRepositoryTests.cs" />
     <Compile Include="OrderServiceIntegrationTests.cs" />
+    <Compile Include="RandomTests.cs" />
     <Compile Include="WheenStatus.cs" />
     <Compile Include="WhenAnalysingMacd.cs" />
     <Compile Include="WhenCalcCurrencyAmount.cs" />

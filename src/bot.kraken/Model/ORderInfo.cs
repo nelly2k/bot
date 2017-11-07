@@ -6,6 +6,8 @@ namespace bot.kraken.Model
     public class OrderInfo
     {
         public string Id { get; set; }
+
+        public string UserRef { get; set; }
         public KrakenOrderStatus Status { get; set; }
 
         public string Reason { get; set; }

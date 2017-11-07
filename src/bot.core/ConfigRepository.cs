@@ -26,6 +26,7 @@ namespace bot.core
             {"analyse_rsi_low", (c, v) => c.AnalyseRsiLow = Convert.ToInt32(v)},
             {"analyse_rsi_high", (c, v) => c.AnalyseRsiHigh = Convert.ToInt32(v)},
             {"base_currency", (c, v) => c.BaseCurrency = v.ToString()},
+            {"is_market", (c, v) => c.IsMarket = Convert.ToBoolean(v)},
             {"analyse_macd_slow_threshold", (c, v) => c.AnalyseMacdSlowThreshold = Convert.ToDecimal(v)},
             { "pair_load", (c, v) =>
             {

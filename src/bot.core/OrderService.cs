@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using bot.model;
 
 namespace bot.core
 {
-    public interface IOrderService:IService
+    public interface IOrderService : IService
     {
         Task CheckOpenOrders();
         Task CheckOpenOrders(IExchangeClient client);
-        Task Buy(IExchangeClient client, string pair, decimal price, bool isMarket = false);
-        Task<bool> Sell(IExchangeClient client, string pair, decimal price, bool isMarket = false);
+        Task Buy(IExchangeClient client, string pair, decimal price);
+        Task<bool> Sell(IExchangeClient client, string pair, decimal price);
     }
 
     public class OrderService : IOrderService
@@ -51,7 +50,7 @@ namespace bot.core
         public async Task CheckOpenOrders(IExchangeClient client)
         {
             var openOrders = await _orderRepository.Get(client.Platform);
-            if (openOrders==null || !openOrders.Any())
+            if (openOrders == null || !openOrders.Any())
             {
                 return;
             }
@@ -67,36 +66,24 @@ namespace bot.core
                 {
                     await _balanceRepository.Remove(client.Platform, order.Pair);
                 }
-                
+
                 await _orderRepository.Remove(client.Platform, order.Id);
             }
         }
 
-        public async Task Buy(IExchangeClient client, string pair, decimal price, bool isMarket = false)
+        public async Task Buy(IExchangeClient client, string pair, decimal price)
         {
             var currentBalance = await client.GetBaseCurrencyBalance();
             var moneyToSpend = currentBalance / 100m * (decimal)_config.PairPercent[pair];
-         
+
             var transformResult = _moneyService.Transform(moneyToSpend, price, 0.26m);
             if (transformResult.TargetCurrencyAmount < _config.MinVolume[pair])
             {
                 _fileService.Write(pair, $"Insufficient funds [volume:{transformResult.TargetCurrencyAmount}]");
                 return;
             }
-            List<string> orderIds;
-            if (isMarket)
-            {
-                _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}]");
-                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair:pair);
-            }
-            else
-            {
-                _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
-                orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, price, pair: pair);
-            }
-
-            await _logRepository.Log(client.Platform, "Trade",
-                $"Added buy order for [pair:{pair}] [volume:{transformResult.TargetCurrencyAmount}]");
+            _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
+            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price);
 
             foreach (var orderId in orderIds)
             {
@@ -104,7 +91,7 @@ namespace bot.core
             }
         }
 
-        public async Task<bool> Sell(IExchangeClient client, string pair, decimal price, bool isMarket = false)
+        public async Task<bool> Sell(IExchangeClient client, string pair, decimal price)
         {
             var balanceItems = await _balanceRepository.Get(client.Platform, pair);
             var isNotSold = false;
@@ -130,7 +117,7 @@ namespace bot.core
                         _fileService.Write(pair, $"Not worths to sell [not sold:{balanceItem.NotSold}]");
                         await _notSoldRepository.SetNotSold(client.Platform, pair);
                     }
-                    
+
                     isNotSold = true;
                 }
             }
@@ -139,21 +126,15 @@ namespace bot.core
             {
                 return !isNotSold;
             }
-            List<string> orderIds;
-            if (isMarket)
+            _fileService.Write(pair, $"Sell [volume:{volume}]");
+            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config.IsMarket ? (decimal?)null : price);
+            if (orderIds == null || !orderIds.Any())
             {
-
-                _fileService.Write(pair, $"Sell [volume:{volume}] [price:{price}]");
-                orderIds = await client.AddOrder(OrderType.sell, volume, pair: pair);
+                return false;
             }
-            else
-            {
-                _fileService.Write(pair, $"Sell [volume:{volume}]");
-                orderIds = await client.AddOrder(OrderType.sell, volume, price, pair: pair);
-            }
-       
             foreach (var orderId in orderIds)
             {
+                _fileService.Write(pair, $"Order submitted [id:{orderId}]");
                 await _orderRepository.Add(client.Platform, pair, orderId);
             }
             return true;

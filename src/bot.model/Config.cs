@@ -27,7 +27,9 @@ namespace bot.model
         public Dictionary<string, decimal> MinVolume { get; set; } = new Dictionary<string, decimal>();
 
         public string Key{ get; set; } 
-        public string Secret{ get; set; } 
+        public string Secret{ get; set; }
+
+        public bool IsMarket { get; set; } = false;
 
         public override string ToString()
         {

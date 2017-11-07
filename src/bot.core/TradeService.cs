@@ -86,14 +86,14 @@ namespace bot.core
                 case TradeStatus.Buy:
                     {
                         var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
-                        await _orderService.Buy(client, pair, Math.Round(lastTrade.PriceBuyAvg, 2), false);
+                        await _orderService.Buy(client, pair, Math.Round(lastTrade.PriceBuyAvg, 2));
                         await SetCurrentStatus(client.Platform, TradeStatus.Buy, pair);
                         break;
                     }
                 case TradeStatus.Sell:
                     {
                         var lastTrade = groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
-                        var sellResult = await _orderService.Sell(client, pair, Math.Round(lastTrade.PriceSellAvg, 2), true);
+                        var sellResult = await _orderService.Sell(client, pair, Math.Round(lastTrade.PriceSellAvg, 2));
                         if (sellResult)
                         {
                             await SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
@@ -103,6 +103,7 @@ namespace bot.core
             }
 
             _fileService.Write(pair, "----------------------------------------------------");
+
         }
 
         public async Task<TradeStatus> GetCurrentStatus(string platform, string pair)

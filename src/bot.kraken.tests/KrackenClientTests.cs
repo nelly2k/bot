@@ -14,10 +14,16 @@ namespace bot.kraken.test
 {
     public class KrackenClientTests
     {
+        KrakenClientService cr;
+        [SetUp]
+        public void Setup()
+        {
+            cr = new KrakenClientService(new Config(), new MyRandom());
+        }
+
         [Test]
         public async Task GetServerTime()
         {
-            var cr = new KrakenClientService(new Config());
             var time = await cr.GetServerTime();
             Assert.That(time.Rfc1123, Is.Not.Null);
         }
@@ -25,7 +31,6 @@ namespace bot.kraken.test
         [Test]
         public async Task GetAssetInfo()
         {
-            var cr = new KrakenClientService(new Config());
             var result = await cr.GetAssetInfo();
             Assert.That(result, Is.Not.Null);
         }
@@ -33,7 +38,6 @@ namespace bot.kraken.test
         [Test]
         public async Task GetEtherAssetInfo()
         {
-            var cr = new KrakenClientService(new Config());
             var result = await cr.GetAssetInfo(assets: "ETH");
             Assert.That(result.Values.First().Altname, Is.EqualTo("ETH"));
         }
@@ -41,7 +45,6 @@ namespace bot.kraken.test
         [Test]
         public async Task GetAssetPairs()
         {
-            var cr = new KrakenClientService(new Config());
             var result = await cr.GetTradableAssetPairs();
             Assert.That(result, Is.Not.Null);
         }
@@ -49,7 +52,6 @@ namespace bot.kraken.test
         [Test]
         public async Task GetTrades()
         {
-            var cr = new KrakenClientService(new Config());
             var result = await cr.GetTrades(pairs: "ETHUSD");
             Assert.That(result.LastId, Is.Not.Null);
             Assert.That(result.Results, Is.Not.Null);
@@ -58,7 +60,6 @@ namespace bot.kraken.test
         [Test]
         public void BuildUrl()
         {
-            var cr = new KrakenClientService(new Config());
             var url = cr.BuildPublicPath("Asset", new Dictionary<string, string>() { { "asset", "ETH" } });
 
             Assert.That(url, Is.EqualTo("https://api.kraken.com/0/public/Asset?asset=ETH"));
@@ -68,7 +69,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetBalance()
         {
-            var cr = new KrakenClientService(await GetConfig());
+            var cr = new KrakenClientService(await GetConfig(), new MyRandom());
             var result = await cr.CallPrivate<Dictionary<string, decimal>>("Balance");
             Assert.That(result, Is.Not.Null);
         }
@@ -76,7 +77,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetClosedOrders()
         {
-            var cr = new KrakenClientService(await GetConfig());
+            var cr = new KrakenClientService(await GetConfig(), new MyRandom());
             var orders = await cr.GetClosedOrders();
             Assert.That(orders.Count, Is.GreaterThan(1));
         }
@@ -90,7 +91,7 @@ namespace bot.kraken.test
         private async Task<KrakenClientService> Client()
         {
             var config = await GetConfig();
-            return new KrakenClientService(config);
+            return new KrakenClientService(config, new MyRandom());
         }
 
         [Test]
@@ -118,19 +119,16 @@ namespace bot.kraken.test
         [Ignore("It is actually buying")]
         public async Task Buy()
         {
-            await (await Client()).AddOrder(OrderType.buy, 0.04m);
+            await (await Client()).AddOrder(OrderType.buy, 0.02m, "ETHUSD");
         }
-
+        
         [Ignore("It is actually buying")]
         [Test]
         public async Task Sell()
         {
-            var result =await (await Client()).AddOrder(OrderType.sell, 0.08m);
+            var result =await (await Client()).AddOrder(OrderType.sell,0.08m, "ETHUSD");
         }
-
-
-
-
+        
         [Test]
         public void Desearialize_AddOrder()
         {
@@ -143,9 +141,11 @@ namespace bot.kraken.test
         [Test]
         public async  Task GetOrderInfo()
         {
-            var result = await (await Client()).GetOrdersInfo("O5YA6T-IXSJS-3GPWKN");
+            var result = await (await Client()).GetOrdersInfo("O3YFED-LEE2W-GNSI6P");
 
             Assert.That(result, Is.Not.Null);
+            Console.WriteLine(result.First().UserRef);
+
         }
 
         [Test]
@@ -155,5 +155,23 @@ namespace bot.kraken.test
 
             Assert.That(result, Is.Not.Null);
         }
+
+
+        [Test]
+        public async Task GetClosedOrdersByUserRef()
+        {
+            var closed = await (await Client()).GetClosedOrders(52796429);
+            
+            Assert.That(closed.Any(), Is.True);
+        }
+
+        [Test]
+        public async Task GetOpenOrdersByUserref()
+        {
+            var open = await (await Client()).GetOpenOrders(52796429);
+
+            Assert.That(open.Any(), Is.True);
+        }
+
     }
 }

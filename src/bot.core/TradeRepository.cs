@@ -28,7 +28,7 @@ namespace bot.core
             using (var con = new SqlConnection(_connectionString))
             {
                 var sb = new StringBuilder();
-                sb.Append(@" select tradeTime, price, volume, buy_sell from trades
+                sb.Append(@"select tradeTime, price, volume, buy_sell from trades
                             where tradeTime > @dateTime");
 
                 if (to.HasValue)

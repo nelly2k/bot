@@ -9,9 +9,9 @@ namespace bot.model
         Task<SinceResponse<ITrade>> GetTrades(string lastId = null, params string[] pairs);
 
         Task<List<Order>> GetOrders(params string[] refs);
+        Task<List<Order>> GetOpenOrders(int? userref = null);
 
         Task<decimal> GetBaseCurrencyBalance();
-        Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair = "ETHUSD");
-        Task<List<string>> AddOrder(OrderType orderType, decimal volume, decimal price, string pair = "ETHUSD");
+        Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair, decimal? price=null);
     }
 }

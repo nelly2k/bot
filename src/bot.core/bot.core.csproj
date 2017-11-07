@@ -64,6 +64,7 @@
     <Compile Include="MailService.cs" />
     <Compile Include="MoneyService.cs" />
     <Compile Include="NotSoldRepository.cs" />
+    <Compile Include="OperationRepository.cs" />
     <Compile Include="OrderRepository.cs" />
     <Compile Include="OrderService.cs" />
     <Compile Include="TradeService.cs" />

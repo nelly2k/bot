@@ -18,7 +18,7 @@ namespace bot.core
             {
                 case FeeSource.Base:
                     result.Fee = Math.Round(baseCurrencyAmount * feePercent / 100, 2);
-                    result.TargetCurrencyAmount = Math.Floor((baseCurrencyAmount - result.Fee) / currencyPrice * 100) / 100m;
+                    result.TargetCurrencyAmount = Math.Floor((baseCurrencyAmount - result.Fee) / currencyPrice * 1000) / 1000m;
                     result.BaseCurrencyRest = baseCurrencyAmount - (result.TargetCurrencyAmount * currencyPrice + result.Fee);
                     break;
                 case FeeSource.Target:

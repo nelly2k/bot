@@ -31,6 +31,7 @@ namespace bot.service.loader
             _container.RegisterAssembleyWith<ITradeRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
             _container.RegisterDateTime();
+            _container.RegisterInstance<IRandom>(new MyRandom());
             _fileService = _container.Resolve<IFileService>();
         }
 
