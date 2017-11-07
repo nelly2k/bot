@@ -82,17 +82,5 @@ namespace bot.core.tests
             Assert.That(_bs.GetVolumeToSell(), Is.EqualTo(0.4m).Within(0.001));
         }
 
-        [Test]
-        public void CalcLoss()
-        {
-            _bs.Buy(287, 0.4m);
-            _bs.Buy(300, 0.5m);
-
-            _bs.MarkNotSold(286);
-            
-            //var getLoss = 
-
-            //Assert.That(_bs.GetVolumeToSell(), Is.EqualTo(0.4m).Within(0.001));
-        }
     }
 }

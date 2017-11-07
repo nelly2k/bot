@@ -19,20 +19,18 @@ namespace bot.core
         private readonly IExchangeClient[] _clients;
         private readonly IBalanceRepository _balanceRepository;
         private readonly Config _config;
-        private readonly ILogRepository _logRepository;
         private readonly IMoneyService _moneyService;
         private readonly INotSoldRepository _notSoldRepository;
         private readonly IFileService _fileService;
         private readonly IDateTime _dateTime;
 
         public OrderService(IOrderRepository orderRepository, IExchangeClient[] clients, IBalanceRepository balanceRepository, Config config,
-            ILogRepository logRepository, IMoneyService moneyService, INotSoldRepository notSoldRepository, IFileService fileService, IDateTime dateTime)
+            IMoneyService moneyService, INotSoldRepository notSoldRepository, IFileService fileService, IDateTime dateTime)
         {
             _orderRepository = orderRepository;
             _clients = clients;
             _balanceRepository = balanceRepository;
             _config = config;
-            _logRepository = logRepository;
             _moneyService = moneyService;
             _notSoldRepository = notSoldRepository;
             _fileService = fileService;
@@ -108,7 +106,7 @@ namespace bot.core
                 }
                 else
                 {
-                    if (balanceItem.NotSoldtDate < _dateTime.Now.AddMinutes(_config.AnalyseTresholdMinutes))
+                    if (balanceItem.NotSoldtDate > _dateTime.Now.AddMinutes(-_config.AnalyseTresholdMinutes))
                     {
                         _fileService.Write(pair, $"Not worths to sell, and too short.");
                     }
