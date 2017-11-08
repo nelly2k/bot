@@ -51,7 +51,15 @@ namespace bot.core
 
                     foreach (var tradePair in _config.PairPercent)
                     {
-                        await Trade(client, tradePair.Key);
+                        try
+                        {
+                            await Trade(client, tradePair.Key);
+                        }
+                        finally
+                        {
+                            _fileService.Write(tradePair.Key, "----------------------------------------------------");
+                        }
+                       
                     }
 
                 }
@@ -61,7 +69,7 @@ namespace bot.core
                     _fileService.Write("error", e.StackTrace);
                     await _logRepository.Log(client.Platform, "Error", e.StackTrace);
                 }
-
+                
             }
         }
 
@@ -79,10 +87,8 @@ namespace bot.core
                                $" [sell: {Math.Round(groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceSellAvg, 2)}]");
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
-                _fileService.Write(pair, "----------------------------------------------------");
                 return;
             }
-
             switch (newStatus)
             {
                 case TradeStatus.Buy:
@@ -103,9 +109,6 @@ namespace bot.core
                         break;
                     }
             }
-
-            _fileService.Write(pair, "----------------------------------------------------");
-
         }
 
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow, string pair)

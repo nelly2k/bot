@@ -53,9 +53,10 @@ namespace bot.core
 
         public async Task CheckOperations(IExchangeClient client)
         {
-            var incompleteOperations = (await _operationRepository.GetIncomplete(client.Platform, "order")).OrderBy(x=>x.Id);
+            var incompleteOperations = (await _operationRepository.GetIncomplete(client.Platform, "add order")).OrderBy(x=>x.Id);
             foreach (var operation in incompleteOperations)
             {
+                _fileService.Write(operation.Pair, $"Incomplete operation [id:{operation.Id}] [operation:{operation.Misc}]");
                 var orderIds = await client.GetOrdersIds(operation.Id);
                 if (!orderIds.Any())
                 {
