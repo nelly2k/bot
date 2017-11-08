@@ -18,7 +18,7 @@ namespace bot.kraken.test
         [SetUp]
         public void Setup()
         {
-            cr = new KrakenClientService(new Config(), new MyRandom());
+            cr = new KrakenClientService(new Config());
         }
 
         [Test]
@@ -69,7 +69,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetBalance()
         {
-            var cr = new KrakenClientService(await GetConfig(), new MyRandom());
+            var cr = new KrakenClientService(await GetConfig());
             var result = await cr.CallPrivate<Dictionary<string, decimal>>("Balance");
             Assert.That(result, Is.Not.Null);
         }
@@ -77,7 +77,7 @@ namespace bot.kraken.test
         [Test]
         public async Task GetClosedOrders()
         {
-            var cr = new KrakenClientService(await GetConfig(), new MyRandom());
+            var cr = new KrakenClientService(await GetConfig());
             var orders = await cr.GetClosedOrders();
             Assert.That(orders.Count, Is.GreaterThan(1));
         }
@@ -91,7 +91,7 @@ namespace bot.kraken.test
         private async Task<KrakenClientService> Client()
         {
             var config = await GetConfig();
-            return new KrakenClientService(config, new MyRandom());
+            return new KrakenClientService(config);
         }
 
         [Test]
@@ -149,6 +149,16 @@ namespace bot.kraken.test
         }
 
         [Test]
+        public async Task GetOrderInfoByUserRef()
+        {
+            var result = await (await Client()).GetOrdersIds(1579540280);
+
+            Assert.That(result, Is.Not.Null);
+            Console.WriteLine(result.First());
+
+        }
+
+        [Test]
         public async Task GetOrder()
         {
             var result = await (await Client()).GetOrders("ON3ZLP-TJK5D-B7UN23", "OWFXTE-VNVDA-6LLX6X");
@@ -173,5 +183,6 @@ namespace bot.kraken.test
             Assert.That(open.Any(), Is.True);
         }
 
+        //1579540280
     }
 }

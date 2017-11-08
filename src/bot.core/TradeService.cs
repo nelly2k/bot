@@ -12,7 +12,6 @@ namespace bot.core
     {
         Task Trade();
         Task Trade(IExchangeClient client, string pair);
-        Task<TradeStatus> GetCurrentStatus(string platform, string pair);
     }
 
     public class TradeService : ITradeService
@@ -25,9 +24,10 @@ namespace bot.core
         private readonly IExchangeClient[] _exchangeClients;
         private readonly ILogRepository _logRepository;
         private readonly IFileService _fileService;
+        private readonly IStatusService _statusService;
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
-            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository, IFileService fileService)
+            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository, IFileService fileService, IStatusService statusService)
         {
             _tradeRepository = tradeRepository;
             _dateTime = dateTime;
@@ -37,6 +37,7 @@ namespace bot.core
             _exchangeClients = exchangeClients;
             _logRepository = logRepository;
             _fileService = fileService;
+            _statusService = statusService;
         }
 
         public async Task Trade()
@@ -45,6 +46,7 @@ namespace bot.core
             {
                 try
                 {
+                    await _orderService.CheckOperations(client);
                     await _orderService.CheckOpenOrders(client);
 
                     foreach (var tradePair in _config.PairPercent)
@@ -65,7 +67,7 @@ namespace bot.core
 
         public async Task Trade(IExchangeClient client, string pair)
         {
-            var currentStatus = await GetCurrentStatus(client.Platform, pair);
+            var currentStatus = await _statusService.GetCurrentStatus(client.Platform, pair);
             await _eventRepository.UpdateLastEvent(client.Platform, $"{EventConstant.Trade} {pair}", string.Empty);
             var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
             var trades = (await _tradeRepository.LoadTrades(pair, dt, _dateTime.Now)).ToList();
@@ -87,7 +89,7 @@ namespace bot.core
                     {
                         var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
                         await _orderService.Buy(client, pair, Math.Round(lastTrade.PriceBuyAvg, 2));
-                        await SetCurrentStatus(client.Platform, TradeStatus.Buy, pair);
+                        await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Buy, pair);
                         break;
                     }
                 case TradeStatus.Sell:
@@ -96,7 +98,7 @@ namespace bot.core
                         var sellResult = await _orderService.Sell(client, pair, Math.Round(lastTrade.PriceSellAvg, 2));
                         if (sellResult)
                         {
-                            await SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
+                            await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
                         }
                         break;
                     }
@@ -104,21 +106,6 @@ namespace bot.core
 
             _fileService.Write(pair, "----------------------------------------------------");
 
-        }
-
-        public async Task<TradeStatus> GetCurrentStatus(string platform, string pair)
-        {
-            var currentStatusStr = await _eventRepository.GetLastEventValue(platform, $"{EventConstant.StatusUpdate} {pair}");
-            var status = (TradeStatus)Enum.Parse(typeof(TradeStatus), currentStatusStr);
-            _fileService.Write(pair, $"Get status for [platform:{platform}] [status:{status}]");
-            return status;
-        }
-
-        public async Task SetCurrentStatus(string platform, TradeStatus tradeStatus, string pair)
-        {
-            _fileService.Write(pair, $"Set status for [platform:{platform}] [new status:{tradeStatus}]");
-            await _eventRepository.UpdateLastEvent(platform, $"{EventConstant.StatusUpdate} {pair}",
-                tradeStatus.ToString());
         }
 
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow, string pair)
