@@ -4,45 +4,68 @@ namespace bot.model
 {
     public class Config:IApiCredentials
     {
+        public Dictionary<string, PairConfig> Pairs { get; set; } = new Dictionary<string, PairConfig>();
 
-        public int LoadIntervalMinutes { get; set; } = 3;
-        public int AnalyseLoadHours { get; set; } = 12;
-        public int AnalyseGroupPeriodMinutes { get; set; } = 4;
-        public int AnalyseMacdGroupPeriodMinutesSlow { get; set; } = 20;
-        public int AnalyseTresholdMinutes { get; set; } = 30;
-        public int AnalyseMacdSlow { get; set; } = 26;
-        public int AnalyseMacdFast { get; set; } = 12;
-        public int AnalyseMacdSignal { get; set; } = 9;
-        public int AnalyseRsiEmaPeriods { get; set; } = 14;
-        public int AnalyseRsiLow{ get; set; } = 30;
-        public int AnalyseRsiHigh{ get; set; } = 70;
-        public int MinBuyBaseCurrency{ get; set; } = 2;
-        public int MaxMissedSells { get; set; } = 3;
+        [Field("base currency")]
         public string BaseCurrency { get; set; } = "ZUSD";
-        public decimal AnalyseMacdSlowThreshold { get; set; } = 0m;
-
-        public List<string> PairToLoad { get; set; } = new List<string>();
-
-        public Dictionary<string, double> PairPercent { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, decimal> MinVolume { get; set; } = new Dictionary<string, decimal>();
-
-        public string Key{ get; set; } 
+        [Field("load interval minutes")]
+        public int LoadIntervalMinutes { get; set; } = 3;
+        [Field("key")]
+        public string Key{ get; set; }
+        [Field("secret")]
         public string Secret{ get; set; }
 
-        public bool IsMarket { get; set; } = false;
-
-        public override string ToString()
+        public PairConfig this[string key]
         {
-            return $"Config [LoadIntervalMinutes:{LoadIntervalMinutes}] " +
-                   $"[AnalyseLoadHours:{AnalyseLoadHours}] " +
-                   $"[AnalyseGroupPeriodMinutes:{AnalyseGroupPeriodMinutes}] " +
-                   $"[AnalyseTresholdMinutes:{AnalyseTresholdMinutes}] " +
-                   $"[AnalyseMacdSlow:{AnalyseMacdSlow}] " +
-                   $"[AnalyseMacdFast:{AnalyseMacdFast}] " +
-                   $"[AnalyseMacdSignal:{AnalyseMacdSignal}] " +
-                   $"[AnalyseRsiEmaPeriods:{AnalyseRsiEmaPeriods}] " +
-                   $"[AnalyseRsiLow:{AnalyseRsiLow}] " +
-                   $"[AnalyseRsiHigh:{AnalyseRsiHigh}] ";
+            get
+            {
+                if (!Pairs.ContainsKey(key))
+                {
+                    Pairs.Add(key, new PairConfig());
+                }
+                return Pairs[key];
+            }
         }
+       
+    }
+
+    public class PairConfig
+    {
+        [Field("is load")]
+        public bool Load { get; set; } = true;
+
+        [Field("is trade")]
+        public bool Trade { get; set; } = false;
+        [Field("is market")]
+        public bool IsMarket { get; set; } = true;
+
+        [Field("load hours")]
+        public int LoadHours { get; set; } = 12;
+        [Field("group by period minutes")]
+        public int GroupMinutes { get; set; } = 4;
+        [Field("group for long macd")]
+        public int GroupForLongMacdMinutes { get; set; } = 20;
+        [Field("short threshold minutes")]
+        public int ThresholdMinutes { get; set; } = 30;
+        [Field("macd short slow")]
+        public int MacdShortSlow { get; set; } = 26;
+        [Field("macd short fast")]
+        public int MacdShortFast { get; set; } = 12;
+        [Field("macd short signal")]
+        public int MacdSignal { get; set; } = 9;
+        [Field("rsi ema")]
+        public int RsiEmaPeriods { get; set; } = 14;
+        [Field("rsi low")]
+        public int RsiLow { get; set; } = 30;
+        [Field("rsi high")]
+        public int RsiHigh { get; set; } = 70;
+        [Field("max missed sells")]
+        public int MaxMissedSells { get; set; } = 3;
+        [Field("min volume")]
+        public decimal MinVolume { get; set; } = 0.02m;
+        [Field("price format")]
+        public int PriceFormat { get; set; } = 2;
+        [Field("share")]
+        public int Share { get; set; } = 95;
     }
 }

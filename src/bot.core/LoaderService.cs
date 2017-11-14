@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Linq;
 using System.Threading.Tasks;
 using bot.model;
 
@@ -30,7 +31,7 @@ namespace bot.core
 
         public async Task Load()
         {
-            var pairs = _config.PairToLoad;
+            var pairs = _config.Pairs.Where(x=>x.Value.Load).Select(x=>x.Key);
 
             foreach (var pair in pairs)
             {

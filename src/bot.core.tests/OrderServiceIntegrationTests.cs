@@ -25,7 +25,7 @@ namespace bot.core.tests
             var configRepo = _container.Resolve<IConfigRepository>();
             _container.RegisterInstance(await configRepo.Get());
             var config = _container.Resolve<Config>();
-            config.PairPercent[Pair] = 10;
+            config.Pairs[Pair].Share = 10;
 
             _exchangeClient = _container.Resolve<IExchangeClient>("kraken");
             _orderService = _container.Resolve<IOrderService>();

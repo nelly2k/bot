@@ -31,8 +31,10 @@ create table trades(
 
 create table config(
 	platform nvarchar(50),
+	pair nvarchar(50),
 	name nvarchar(50),
-	value nvarchar(100)
+	value nvarchar(100),
+	constraint pk_config primary key (platform, pair, name)
 )
 
 

@@ -47,7 +47,7 @@ namespace bot.core
                 {
                     await _orderService.CheckOpenOrders(client);
 
-                    foreach (var tradePair in _config.PairPercent)
+                    foreach (var tradePair in _config.Pairs)
                     {
                         await Trade(client, tradePair.Key);
                     }
@@ -67,10 +67,10 @@ namespace bot.core
         {
             var currentStatus = await GetCurrentStatus(client.Platform, pair);
             await _eventRepository.UpdateLastEvent(client.Platform, $"{EventConstant.Trade} {pair}", string.Empty);
-            var dt = _dateTime.Now.AddHours(-_config.AnalyseLoadHours);
+            var dt = _dateTime.Now.AddHours(-_config[pair].LoadHours);
             var trades = (await _tradeRepository.LoadTrades(pair, dt, _dateTime.Now)).ToList();
-            var groupedTrades = trades.GroupAll(_config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-            var groupedTradesSlow = trades.GroupAll(_config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
+            var groupedTrades = trades.GroupAll(_config[pair].GroupMinutes, GroupBy.Minute).ToList();
+            var groupedTradesSlow = trades.GroupAll(_config[pair].GroupForLongMacdMinutes, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
 
             var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow, pair);
             _fileService.Write(pair, $"Price [buy: {Math.Round(groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceBuyAvg, 2)}]" +
@@ -123,10 +123,10 @@ namespace bot.core
 
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow, string pair)
         {
-            var macd = groupedTrades.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast, _config.AnalyseMacdSignal).MacdAnalysis();
+            var macd = groupedTrades.Macd(_config[pair].MacdShortSlow, _config[pair].MacdShortFast, _config[pair].MacdSignal).MacdAnalysis();
             _fileService.Write(pair, $"MACD_F [status:{(macd.CrossType == CrossType.MacdFalls ? "Sell" : "Buy")}] [since:{(int)(_dateTime.Now - macd.Trade.DateTime).TotalMinutes}]");
-            var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config.AnalyseRsiEmaPeriods)
-                .GetPeaks(_config.AnalyseRsiLow, _config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
+            var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config[pair].RsiEmaPeriods)
+                .GetPeaks(_config[pair].RsiLow, _config[pair].RsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                 .FirstOrDefault();
             if (rsiLastPeak != null)
             {
@@ -138,14 +138,13 @@ namespace bot.core
                 _fileService.Write(pair, "No RSI Peaks found");
             }
 
-            var macdSlow = groupedTradesSlow.Macd(_config.AnalyseMacdSlow, _config.AnalyseMacdFast,
-                _config.AnalyseMacdSignal).ToList();
+            var macdSlow = groupedTradesSlow.Macd(_config[pair].MacdShortSlow, _config[pair].MacdShortFast, _config[pair].MacdSignal).ToList();
 
-            var macdSlowAnalysis = macdSlow.MacdSlowAnalysis(_config.AnalyseMacdSlowThreshold);
+            var macdSlowAnalysis = macdSlow.MacdSlowAnalysis();
             _fileService.Write(pair, $"MACD_S [macd:{Math.Round(macdSlow.Last().Macd, 2)}] [signal:{Math.Round(macdSlow.Last().Signal, 2)}]");
             _fileService.Write(pair, $"MACD_S [status:{macdSlowAnalysis.ToString()}]");
 
-            var status = AnalysisExtensions.AnalyseIndeces(_config.AnalyseTresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlowAnalysis);
+            var status = AnalysisExtensions.AnalyseIndeces(_config[pair].ThresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlowAnalysis);
             _fileService.Write(pair, $"Analysis [status:{status.ToString()}]");
             return status;
         }

@@ -72,16 +72,16 @@ namespace bot.core
         public async Task Buy(IExchangeClient client, string pair, decimal price)
         {
             var currentBalance = await client.GetBaseCurrencyBalance();
-            var moneyToSpend = currentBalance / 100m * (decimal)_config.PairPercent[pair];
+            var moneyToSpend = currentBalance / 100m * (decimal)_config[pair].Share;
 
             var transformResult = _moneyService.Transform(moneyToSpend, price, 0.26m);
-            if (transformResult.TargetCurrencyAmount < _config.MinVolume[pair])
+            if (transformResult.TargetCurrencyAmount < _config[pair].MinVolume)
             {
                 _fileService.Write(pair, $"Insufficient funds [volume:{transformResult.TargetCurrencyAmount}]");
                 return;
             }
             _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
-            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price);
+            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config[pair].IsMarket ? (decimal?)null : price);
 
             foreach (var orderId in orderIds)
             {
@@ -100,13 +100,13 @@ namespace bot.core
                 var sellPrice = balanceItem.Volume * price +
                                 _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
 
-                if (boughtPrice < sellPrice || balanceItem.NotSold >= _config.MaxMissedSells)
+                if (boughtPrice < sellPrice || balanceItem.NotSold >= _config[pair].MaxMissedSells)
                 {
                     volume += balanceItem.Volume;
                 }
                 else
                 {
-                    if (balanceItem.NotSoldtDate > _dateTime.Now.AddMinutes(-_config.AnalyseTresholdMinutes))
+                    if (balanceItem.NotSoldtDate > _dateTime.Now.AddMinutes(-_config[pair].ThresholdMinutes))
                     {
                         _fileService.Write(pair, $"Not worths to sell, and too short.");
                     }
@@ -125,7 +125,7 @@ namespace bot.core
                 return !isNotSold;
             }
             _fileService.Write(pair, $"Sell [volume:{volume}]");
-            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config.IsMarket ? (decimal?)null : price);
+            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config[pair].IsMarket ? (decimal?)null : price);
             if (orderIds == null || !orderIds.Any())
             {
                 return false;

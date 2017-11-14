@@ -26,15 +26,15 @@ namespace bot.core.tests
             var configRepo = new ConfigRepository();
 
             var config = await configRepo.Get();
-            config.AnalyseGroupPeriodMinutes = 15;
+            config[AltName].GroupMinutes = 15;
             _dt = DateTime.Now.AddHours(-12);
             var trades = (await _tradeRepository.LoadTrades(AltName, _dt)).ToList();
-            var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-            var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
-            var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods);
+            var grouped = trades.GroupAll(config[AltName].GroupMinutes, GroupBy.Minute).ToList();
+            var macd = grouped.Macd(config[AltName].MacdShortSlow, config[AltName].MacdShortFast, config[AltName].MacdSignal).ToList();
+            var rsi = grouped.RelativeStrengthIndex(config[AltName].RsiEmaPeriods);
             
-            var grouped2 = trades.GroupAll(config.AnalyseMacdGroupPeriodMinutesSlow, GroupBy.Minute).ToList();
-            var macd2 = grouped2.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
+            var grouped2 = trades.GroupAll(config[AltName].GroupForLongMacdMinutes, GroupBy.Minute).ToList();
+            var macd2 = grouped2.Macd(config[AltName].MacdShortSlow, config[AltName].MacdShortFast, config[AltName].MacdSignal).ToList();
 
             var lines = (from m in macd
                          join r in rsi on m.DateTime equals r.DateTime
@@ -47,35 +47,7 @@ namespace bot.core.tests
 
             Write("macd_rsi", lines);
         }
-        
-        [Test]
-        public async Task AllTogetherCertainPeriod()
-        {
-            var configRepo = new ConfigRepository();
-
-            var config = await configRepo.Get();
-            var end = new DateTime(2017, 10, 20, 20, 0, 0);
-
-            var start = end.AddHours(-18);
-
-            var trades = await _tradeRepository.LoadTrades(AltName, start, end);
-            var grouped = trades.GroupAll(config.AnalyseGroupPeriodMinutes, GroupBy.Minute).ToList();
-            var macd = grouped.Macd(config.AnalyseMacdSlow, config.AnalyseMacdFast, config.AnalyseMacdSignal).ToList();
-            var rsi = grouped.RelativeStrengthIndex(config.AnalyseRsiEmaPeriods).ToList();
-            var macdAnal = macd.MacdAnalysis();
-            var rsiLastPeak = rsi.GetPeaks(config.AnalyseRsiLow, config.AnalyseRsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
-                .FirstOrDefault();
-
-            var lines = (from m in macd
-                         join r in rsi on m.DateTime equals r.DateTime
-                         join g in grouped on m.DateTime equals g.DateTime
-                         select $"{m.DateTime},{r.Price},{m.Macd},{m.Signal},{g.Volume},{g.Price},{g.PriceMin},{g.PriceMax},{Mark(macdAnal, rsiLastPeak, m.DateTime)}").ToList();
-
-            lines.Insert(0, "Date,RSI,MACD,Signal,Volume,PriceAvg,PriceMin,PriceMax,MACD_Anal,RSI_Anal");
-
-            Write("macd_rsi_period", lines);
-           
-        }
+   
 
         [Test]
         public async Task LoadTradesTask()
@@ -84,14 +56,6 @@ namespace bot.core.tests
             var result= await repo.LoadTrades("XBTUSD", new DateTime(2017, 11, 02, 11, 40, 00),
                 new DateTime(2017, 11, 03, 11, 40, 00));
             Assert.That(result.Any(), Is.True);
-        }
-
-        private static string Mark(MacdAnalysisResult macd, PeakAnalysisResult rsi, DateTime dt)
-        {
-            var macdVal = dt == macd.Trade.DateTime ? macd.Trade.Price.ToString() : "";
-            var rsiVal = dt == rsi.ExitTrade.DateTime ? rsi.ExitTrade.Price.ToString() : "";
-
-            return $"{macdVal},{rsiVal}";
         }
 
         public void Write(string name, IEnumerable<string> lines)

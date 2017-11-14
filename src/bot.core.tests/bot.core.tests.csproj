@@ -126,6 +126,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FieldAttributeTests.cs" />
     <Compile Include="Integration.cs" />
     <Compile Include="IntegrationTests.cs" />
     <Compile Include="OperationRepositoryTests.cs" />
