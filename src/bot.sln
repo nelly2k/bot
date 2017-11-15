@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.kraken", "bot.kraken\bot.kraken.csproj", "{56FC4AEA-C021-42AB-9796-44156C78C206}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.loader", "bot.service.loader\bot.service.loader.csproj", "{673628DE-4DB1-498F-8FEC-7E5D20AF6F7A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.trader", "bot.service.trader\bot.service.trader.csproj", "{B843E8AF-7A4B-4996-94DF-6BF45E88A4B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.ai", "bot.core.ai\bot.core.ai.csproj", "{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{B843E8AF-7A4B-4996-94DF-6BF45E88A4B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B843E8AF-7A4B-4996-94DF-6BF45E88A4B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B843E8AF-7A4B-4996-94DF-6BF45E88A4B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
