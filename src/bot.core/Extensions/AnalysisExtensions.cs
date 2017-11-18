@@ -46,21 +46,22 @@ namespace bot.core.Extensions
                 return TradeStatus.Buy;
             }
 
-            var sum = Math.Abs(last.Macd - last.Signal);
-            for (var i = 1; i < 3; i++)
-            {
-                var next = Math.Abs(lastThree[i].Macd - lastThree[i].Signal);
-                if (sum < next)
-                {
-                    sum = next;
-                }
-                else
-                {
-                    return TradeStatus.Unknown;
-                }
-            }
+            return TradeStatus.Unknown;
+            //var sum = Math.Abs(last.Macd - last.Signal);
+            //for (var i = 1; i < 3; i++)
+            //{
+            //    var next = Math.Abs(lastThree[i].Macd - lastThree[i].Signal);
+            //    if (sum < next)
+            //    {
+            //        sum = next;
+            //    }
+            //    else
+            //    {
+            //        return TradeStatus.Unknown;
+            //    }
+            //}
 
-            return TradeStatus.Buy;
+            //return TradeStatus.Buy;
         }
 
         public static MacdAnalysisResult MacdAnalysis(this IEnumerable<MacdResultItem> macd)

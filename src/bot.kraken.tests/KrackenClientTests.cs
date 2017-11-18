@@ -128,7 +128,7 @@ namespace bot.kraken.test
         {
             var result =await (await Client()).AddOrder(OrderType.sell,0.08m, "ETHUSD");
         }
-        
+
         [Test]
         public void Desearialize_AddOrder()
         {

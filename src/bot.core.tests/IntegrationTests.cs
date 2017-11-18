@@ -88,13 +88,23 @@ namespace bot.core.tests
 
         private void SetupExchangeService(OrderType type, Action<decimal, decimal> setVolumePrice)
         {
-            _exchangeClient.When(x => x.AddOrder(type, Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>()))
+            _exchangeClient.When(x => x.Buy(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>()))
                 .Do(x =>
                 {
                     setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[3]));
                 });
 
-            _exchangeClient.AddOrder(Arg.Any<OrderType>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>())
+
+            _exchangeClient.When(x => x.Sell(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>()))
+                .Do(x =>
+                {
+                    setVolumePrice?.Invoke(Convert.ToDecimal(x.Args()[1]), Convert.ToDecimal(x.Args()[3]));
+                });
+
+            _exchangeClient.Buy(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>())
+                .ReturnsForAnyArgs(new List<string>());
+
+            _exchangeClient.Sell(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<decimal?>())
                 .ReturnsForAnyArgs(new List<string>());
         }
 

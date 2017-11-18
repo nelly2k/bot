@@ -63,14 +63,19 @@ namespace bot.service.loader
                 }).Wait();
                 if (config == null)
                 {
-                    _fileService.Write("loader",$"{DateTime.Now:G} Config wasn't loaded");
+                    _fileService.Write("loader", "Config wasn't loaded");
                     return;
                 }
                 _container.RegisterInstance(config);
 
-                var loaderService =  _container.Resolve<ILoaderService>();
-                loaderService.Load().Wait(new TimeSpan(0,0,2));
+                var loaderService = _container.Resolve<ILoaderService>();
+                loaderService.Load().Wait(new TimeSpan(0, 0, 2));
                 _timer.Interval = config.LoadIntervalMinutes * 60 * 1000;
+            }
+            catch (Exception ex)
+            {
+                _fileService.Write("loader", ex.Message);
+                _fileService.Write("loader", ex.StackTrace);
             }
             finally
             {
