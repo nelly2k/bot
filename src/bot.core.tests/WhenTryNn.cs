@@ -49,7 +49,7 @@ namespace bot.core.tests
                 //    // Compute one learning iteration
                 error = teacher.RunEpoch(input, output);
 
-            } while (Math.Abs(previous - error) > 1e-10 );
+            } while (Math.Abs(previous - error) > 0.01 );
 
              int[] answers = input.Apply(network.Compute).GetColumn(0).Apply(System.Math.Sign);
         }

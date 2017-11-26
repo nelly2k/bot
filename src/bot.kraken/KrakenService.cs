@@ -305,12 +305,29 @@ namespace bot.kraken
             return orderInfos.Select(x => new Order
             {
                 Id = x.Id,
-                OrderStatus = x.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending,
+                OrderStatus = MapStatus(x.Status),
                 Volume = x.Volume,
                 Price = x.Price,
                 Pair = x.Pair,
                 OrderType = x.OrderType
             }).ToList();
+        }
+
+        private OrderStatus MapStatus(KrakenOrderStatus krakenOrderStatus)
+        {
+            switch (krakenOrderStatus)
+            {
+               
+                case KrakenOrderStatus.closed:
+                    return OrderStatus.Closed;
+                case KrakenOrderStatus.canceled:
+                    return OrderStatus.Cancelled;
+                case KrakenOrderStatus.pending:
+                case KrakenOrderStatus.open:
+                case KrakenOrderStatus.expired:
+                default:
+                    return OrderStatus.Pending;
+            }
         }
 
         public async Task<decimal> GetBaseCurrencyBalance()

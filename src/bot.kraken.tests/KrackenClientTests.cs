@@ -141,7 +141,7 @@ namespace bot.kraken.test
         [Test]
         public async  Task GetOrderInfo()
         {
-            var result = await (await Client()).GetOrdersInfo("O3YFED-LEE2W-GNSI6P");
+            var result = await (await Client()).GetOrdersInfo("OFPGUC-GCAXO-V6TCFC");
 
             Assert.That(result, Is.Not.Null);
             Console.WriteLine(result.First().UserRef);

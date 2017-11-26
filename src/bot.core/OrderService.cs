@@ -88,15 +88,18 @@ namespace bot.core
             }
             var orders = await client.GetOrders(openOrders.Keys.ToArray());
 
-            foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed))
+            foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed || x.OrderStatus == OrderStatus.Cancelled))
             {
-                if (order.OrderType == OrderType.buy)
+                if (order.OrderStatus != OrderStatus.Cancelled)
                 {
-                    await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
-                }
-                else
-                {
-                    await _balanceRepository.Remove(client.Platform, order.Pair);
+                    if (order.OrderType == OrderType.buy)
+                    {
+                        await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
+                    }
+                    else
+                    {
+                        await _balanceRepository.Remove(client.Platform, order.Pair);
+                    }
                 }
 
                 await _orderRepository.Remove(client.Platform, order.Id);
