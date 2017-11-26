@@ -33,16 +33,14 @@ namespace bot.kraken
     public class KrakenClientService : IKrakenClientService
     {
         private readonly Config _config;
-        private readonly IRandom _random;
 
         private const string VERSION = "0";
         private const string PUBLIC = "public";
         private const string PRIVATE = "private";
 
-        public KrakenClientService(Config config, IRandom random)
+        public KrakenClientService(Config config)
         {
             _config = config;
-            _random = random;
         }
 
         public async Task<ServerTime> GetServerTime()
@@ -108,38 +106,29 @@ namespace bot.kraken
             return result;
         }
 
-        public async Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair, decimal? price = null)
+        public async Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair, decimal? price = null, int? operationId = null)
         {
-            var userref = _random.Get();
-            Console.WriteLine(userref);
             var pars = new Dictionary<string, string>
             {
                 {"pair", pair},
                 {"type", orderType.ToString()},
                 {"ordertype", price.HasValue ? "limit" : "market"},
-                {"userref", userref.ToString()},
                 {"volume", volume.ToString(CultureInfo.InvariantCulture)}
             };
             if (price.HasValue)
             {
                 pars.Add("price", price.ToString());
             }
-
-            try
+            if (operationId.HasValue)
             {
-                var response = await CallPrivate<Dictionary<string, object>>("AddOrder", pars);
-
-                var txid = response["txid"];
-                return JsonConvert.DeserializeObject<List<string>>(txid.ToString());
+                pars.Add("userref", operationId.ToString());
             }
-            catch (InternalException e)
-            {
-                var result = new List<string>();
-                result.AddRange((await GetClosedOrders(userref)).Select(x => x.Id));
-                result.AddRange((await GetOpenOrders(userref)).Select(x => x.Id));
 
-                return result;
-            }
+            var response = await CallPrivate<Dictionary<string, object>>("AddOrder", pars);
+
+            var txid = response["txid"];
+            return JsonConvert.DeserializeObject<List<string>>(txid.ToString());
+
         }
 
         public List<OrderInfo> ToOrders(Dictionary<string, object> orders)
@@ -161,18 +150,18 @@ namespace bot.kraken
                     Set("price2", desc, o => item.SecondaryPrice = Convert.ToDecimal(o));
                     Set("leverage", desc, o => item.Leverage = Convert.ToString(o));
                 }
-                
+
                 Set("status", details, o => item.Status = Convert.ToString(o).ToEnum<KrakenOrderStatus>());
                 Set("reason", details, o => item.Reason = Convert.ToString(o));
                 Set("userref", details, o => item.UserRef = Convert.ToString(o));
-               
+
                 Set("vol", details, o => item.Volume = Convert.ToDecimal(o));
                 Set("vol_exec", details, o => item.VolumeExec = Convert.ToDecimal(o));
                 Set("cost", details, o => item.Cost = Convert.ToDecimal(o));
                 Set("price", details, o => item.Price = Convert.ToDecimal(o));
                 Set("fee", details, o => item.Fee = Convert.ToDecimal(o));
                 Set("misc", details, o => item.Misc = Convert.ToString(o));
-                
+
                 result.Add(item);
             }
             return result;
@@ -194,6 +183,15 @@ namespace bot.kraken
             };
             var response = await CallPrivate<Dictionary<string, object>>("QueryOrders", paramPairs);
             return ToOrders(response);
+        }
+
+        public async Task<List<string>> GetOrdersIds(int userref)
+        {
+            var result = new List<string>();
+            result.AddRange((await GetOpenOrders(userref)).Select(x=>x.Id));
+            result.AddRange((await GetClosedOrders(userref)).Select(x => x.Id));
+            return result;
+
         }
 
         public async Task<List<OrderInfo>> GetClosedOrders(int? userref = null)
@@ -317,7 +315,7 @@ namespace bot.kraken
                 throw new InternalException($"Request is unsuccessful. [code:{response.StatusCode.ToString()}] [reason:{response.ReasonPhrase}]");
             }
 
-          //  var str = await response.Content.ReadAsStringAsync();
+            //  var str = await response.Content.ReadAsStringAsync();
             var serverResponse = await response.Content.ReadAsAsync<KrakenResponse<TResult>>();
             if (serverResponse.Error != null && serverResponse.Error.Any())
             {

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using bot.model;
 
@@ -11,6 +10,7 @@ namespace bot.core
         Task CheckOpenOrders(IExchangeClient client);
         Task Buy(IExchangeClient client, string pair, decimal price);
         Task<bool> Sell(IExchangeClient client, string pair, decimal price);
+        Task CheckOperations(IExchangeClient client);
     }
 
     public class OrderService : IOrderService
@@ -23,9 +23,13 @@ namespace bot.core
         private readonly INotSoldRepository _notSoldRepository;
         private readonly IFileService _fileService;
         private readonly IDateTime _dateTime;
+        private readonly IOperationRepository _operationRepository;
+        private readonly IStatusService _statusService;
 
         public OrderService(IOrderRepository orderRepository, IExchangeClient[] clients, IBalanceRepository balanceRepository, Config config,
-            IMoneyService moneyService, INotSoldRepository notSoldRepository, IFileService fileService, IDateTime dateTime)
+            IMoneyService moneyService, INotSoldRepository notSoldRepository, IFileService fileService, IDateTime dateTime, IOperationRepository operationRepository,
+            IStatusService statusService)
+
         {
             _orderRepository = orderRepository;
             _clients = clients;
@@ -35,6 +39,8 @@ namespace bot.core
             _notSoldRepository = notSoldRepository;
             _fileService = fileService;
             _dateTime = dateTime;
+            _operationRepository = operationRepository;
+            _statusService = statusService;
         }
 
         public async Task CheckOpenOrders()
@@ -42,6 +48,34 @@ namespace bot.core
             foreach (var client in _clients)
             {
                 await CheckOpenOrders(client);
+            }
+        }
+
+        public async Task CheckOperations(IExchangeClient client)
+        {
+            var incompleteOperations = (await _operationRepository.GetIncomplete(client.Platform, "add order")).OrderBy(x=>x.Id);
+            foreach (var operation in incompleteOperations)
+            {
+                _fileService.Write(operation.Pair, $"Incomplete operation [id:{operation.Id}] [operation:{operation.Misc}]");
+                var orderIds = await client.GetOrdersIds(operation.Id);
+                if (!orderIds.Any())
+                {
+                    continue;
+                }
+
+                foreach (var orderId in orderIds)
+                {
+                    await _orderRepository.Add(client.Platform, operation.Pair, orderId);
+                }
+
+                await _operationRepository.Complete(operation.Id);
+                if (operation.Misc == "sell")
+                {
+                    await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, operation.Pair);
+                }else if (operation.Misc == "buy")
+                {
+                    await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Buy, operation.Pair);
+                }
             }
         }
 
@@ -81,11 +115,17 @@ namespace bot.core
                 return;
             }
             _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
-            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config[pair].IsMarket ? (decimal?)null : price);
+            var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "buy");
 
-            foreach (var orderId in orderIds)
+            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price, operationId);
+
+            if (orderIds != null && orderIds.Any())
             {
-                await _orderRepository.Add(client.Platform, pair, orderId);
+                await _operationRepository.Complete(operationId);
+                foreach (var orderId in orderIds)
+                {
+                    await _orderRepository.Add(client.Platform, pair, orderId);
+                }
             }
         }
 
@@ -93,12 +133,13 @@ namespace bot.core
         {
             var balanceItems = await _balanceRepository.Get(client.Platform, pair);
             var isNotSold = false;
-            decimal volume = decimal.Zero;
+            var volume = decimal.Zero;
             foreach (var balanceItem in balanceItems)
             {
-                var boughtPrice = balanceItem.Volume * balanceItem.Price + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
-                var sellPrice = balanceItem.Volume * price +
-                                _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m);
+                var boughtPrice = balanceItem.Volume * balanceItem.Price
+                    + _moneyService.FeeToPay(balanceItem.Volume, balanceItem.Price, 0.26m)
+                    + _moneyService.FeeToPay(balanceItem.Volume, price, 0.26m);
+                var sellPrice = balanceItem.Volume * price;
 
                 if (boughtPrice < sellPrice || balanceItem.NotSold >= _config[pair].MaxMissedSells)
                 {
@@ -125,17 +166,21 @@ namespace bot.core
                 return !isNotSold;
             }
             _fileService.Write(pair, $"Sell [volume:{volume}]");
-            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config[pair].IsMarket ? (decimal?)null : price);
+            var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "sell");
+
+            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config.IsMarket ? (decimal?)null : price, operationId);
             if (orderIds == null || !orderIds.Any())
             {
                 return false;
             }
+            await _operationRepository.Complete(operationId);
             foreach (var orderId in orderIds)
             {
                 _fileService.Write(pair, $"Order submitted [id:{orderId}]");
                 await _orderRepository.Add(client.Platform, pair, orderId);
             }
             return true;
+
         }
     }
 }

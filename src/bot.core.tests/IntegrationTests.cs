@@ -34,6 +34,7 @@ namespace bot.core.tests
             _container.RegisterInstance(Substitute.For<ITradeRepository>());
             _container.RegisterInstance(Substitute.For<INotSoldRepository>());
             _container.RegisterInstance(Substitute.For<IFileService>());
+            _container.RegisterInstance(Substitute.For<IStatusService>());
             _container.RegisterInstance("kraken", Substitute.For<IExchangeClient>());
 
             _eventRepository = _container.Resolve<IEventRepository>();
@@ -100,7 +101,7 @@ namespace bot.core.tests
         [Test]
         public async Task StatusIsSet()
         {
-            var tradeSer = _container.Resolve<ITradeService>();
+            var tradeSer = _container.Resolve<IStatusService>();
             SetCurrentStatus(TradeStatus.Buy);
             Assert.That(await tradeSer.GetCurrentStatus("",""), Is.EqualTo(TradeStatus.Buy));
             SetCurrentStatus(TradeStatus.Sell);
