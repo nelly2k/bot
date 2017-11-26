@@ -12,7 +12,8 @@ namespace bot.model
         Task<List<Order>> GetOpenOrders(int? userref = null);
 
         Task<decimal> GetBaseCurrencyBalance();
-        Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair, decimal? price=null, int? operationId=null);
         Task<List<string>> GetOrdersIds(int userref);
+        Task<List<string>> Buy(decimal volume, string pair, decimal? price=null, int? operationId=null);
+        Task<List<string>> Sell(decimal volume, string pair, decimal? price = null, int? operationId = null);
     }
 }

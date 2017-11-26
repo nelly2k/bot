@@ -88,15 +88,18 @@ namespace bot.core
             }
             var orders = await client.GetOrders(openOrders.Keys.ToArray());
 
-            foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed))
+            foreach (var order in orders.Where(x => x.OrderStatus == OrderStatus.Closed || x.OrderStatus == OrderStatus.Cancelled))
             {
-                if (order.OrderType == OrderType.buy)
+                if (order.OrderStatus != OrderStatus.Cancelled)
                 {
-                    await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
-                }
-                else
-                {
-                    await _balanceRepository.Remove(client.Platform, order.Pair);
+                    if (order.OrderType == OrderType.buy)
+                    {
+                        await _balanceRepository.Add(client.Platform, order.Pair, order.Volume, order.Price);
+                    }
+                    else
+                    {
+                        await _balanceRepository.Remove(client.Platform, order.Pair);
+                    }
                 }
 
                 await _orderRepository.Remove(client.Platform, order.Id);
@@ -117,7 +120,7 @@ namespace bot.core
             _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
             var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "buy");
 
-            var orderIds = await client.AddOrder(OrderType.buy, transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price, operationId);
+            var orderIds = await client.Buy(transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price, operationId);
 
             if (orderIds != null && orderIds.Any())
             {
@@ -168,7 +171,7 @@ namespace bot.core
             _fileService.Write(pair, $"Sell [volume:{volume}]");
             var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "sell");
 
-            var orderIds = await client.AddOrder(OrderType.sell, volume, pair, _config.IsMarket ? (decimal?)null : price, operationId);
+            var orderIds = await client.Sell(volume, pair, _config.IsMarket ? (decimal?)null : price, operationId);
             if (orderIds == null || !orderIds.Any())
             {
                 return false;

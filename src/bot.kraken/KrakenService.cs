@@ -106,12 +106,65 @@ namespace bot.kraken
             return result;
         }
 
+        public async Task<List<string>> Buy(decimal volume, string pair, decimal? price=null, int? operationId=null)
+        {
+            return await AddOrder(OrderType.buy, price.HasValue ? "limit" : "market", volume, pair, price, operationId);
+        }
+
+        public async Task<List<string>> Sell(decimal volume, string pair, decimal? price = null, int? operationId = null)
+        {
+            return await AddOrder(OrderType.sell, price.HasValue ? "limit" : "market", volume, pair, price, operationId);
+        }
+
+        public async Task<List<string>> AddOrder(OrderType operationType, 
+            string orderType, 
+            decimal volume, 
+            string pair, decimal? price = null, int? operationId = null, Dictionary<string,string> additionalParameters = null)
+        {
+            var pars = new Dictionary<string, string>
+            {
+                {"pair", pair},
+                {"type", operationType.ToString()},
+                {"ordertype", orderType},
+                {"volume", volume.ToString(CultureInfo.InvariantCulture)}
+            };
+            if (price.HasValue)
+            {
+                pars.Add("price", price.ToString());
+            }
+            if (operationId.HasValue)
+            {
+                pars.Add("userref", operationId.ToString());
+            }
+
+            if (additionalParameters != null)
+            {
+                foreach (var parameter in additionalParameters)
+                {
+                    if (pars.ContainsKey(parameter.Key))
+                    {
+                        pars[parameter.Key] = parameter.Value;
+                    }
+                    else
+                    {
+                        pars.Add(parameter.Key, parameter.Value);
+                    }
+                }   
+            }
+
+            var response = await CallPrivate<Dictionary<string, object>>("AddOrder", pars);
+
+            var txid = response["txid"];
+            return JsonConvert.DeserializeObject<List<string>>(txid.ToString());
+
+        }
+
         public async Task<List<string>> AddOrder(OrderType orderType, decimal volume, string pair, decimal? price = null, int? operationId = null)
         {
             var pars = new Dictionary<string, string>
             {
                 {"pair", pair},
-                {"type", orderType.ToString()},
+                {"type", orderType.ToString().Replace("_","-")},
                 {"ordertype", price.HasValue ? "limit" : "market"},
                 {"volume", volume.ToString(CultureInfo.InvariantCulture)}
             };
@@ -252,12 +305,29 @@ namespace bot.kraken
             return orderInfos.Select(x => new Order
             {
                 Id = x.Id,
-                OrderStatus = x.Status == KrakenOrderStatus.closed ? OrderStatus.Closed : OrderStatus.Pending,
+                OrderStatus = MapStatus(x.Status),
                 Volume = x.Volume,
                 Price = x.Price,
                 Pair = x.Pair,
                 OrderType = x.OrderType
             }).ToList();
+        }
+
+        private OrderStatus MapStatus(KrakenOrderStatus krakenOrderStatus)
+        {
+            switch (krakenOrderStatus)
+            {
+               
+                case KrakenOrderStatus.closed:
+                    return OrderStatus.Closed;
+                case KrakenOrderStatus.canceled:
+                    return OrderStatus.Cancelled;
+                case KrakenOrderStatus.pending:
+                case KrakenOrderStatus.open:
+                case KrakenOrderStatus.expired:
+                default:
+                    return OrderStatus.Pending;
+            }
         }
 
         public async Task<decimal> GetBaseCurrencyBalance()
