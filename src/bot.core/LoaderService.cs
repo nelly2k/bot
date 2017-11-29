@@ -31,7 +31,7 @@ namespace bot.core
 
         public async Task Load()
         {
-            var pairs = _config.Pairs.Where(x=>x.Value.Load).Select(x=>x.Key);
+            var pairs = _config.Pairs.Where(x=>x.Value.ShouldLoad).Select(x=>x.Key);
 
             foreach (var pair in pairs)
             {

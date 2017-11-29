@@ -3,16 +3,14 @@ using NUnit.Framework;
 
 namespace bot.core.tests
 {
-    public class WhenFetchingConfig
+    public class ConfigTests
     {
+
         [Test]
-        public async Task FetchConfig()
+        public async Task DeployData()
         {
             var repo = new ConfigRepository();
-            var config = await repo.Get();
-
-            Assert.That(config.Key, Is.Not.Null);
-
+            await repo.Deploy("test", "ETHUSD", "XBTUSD");
         }
     }
 }

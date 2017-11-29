@@ -120,7 +120,7 @@ namespace bot.core
             _fileService.Write(pair, $"Buy [volume:{transformResult.TargetCurrencyAmount}] [price:{price}]");
             var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "buy");
 
-            var orderIds = await client.Buy(transformResult.TargetCurrencyAmount, pair, _config.IsMarket ? (decimal?)null : price, operationId);
+            var orderIds = await client.Buy(transformResult.TargetCurrencyAmount, pair, _config[pair].IsMarket ? (decimal?)null : price, operationId);
 
             if (orderIds != null && orderIds.Any())
             {
@@ -171,7 +171,7 @@ namespace bot.core
             _fileService.Write(pair, $"Sell [volume:{volume}]");
             var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "sell");
 
-            var orderIds = await client.Sell(volume, pair, _config.IsMarket ? (decimal?)null : price, operationId);
+            var orderIds = await client.Sell(volume, pair, _config[pair].IsMarket ? (decimal?)null : price, operationId);
             if (orderIds == null || !orderIds.Any())
             {
                 return false;

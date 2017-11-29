@@ -11,10 +11,14 @@ namespace bot.model
             return (TEnum)Enum.Parse(typeof(TEnum), str);
         }
 
-        public static string Field(this Type type, Func<Config,string> propertyFunc)
+        public static string GetField(this Type type, Func<Config,string> propertyFunc)
         {
-            //Config.getField(x=>nameof(x.))
             var prop = type.GetProperty(propertyFunc(new Config()));
+            return prop.GetField();
+        }
+
+        public static string GetField(this PropertyInfo prop)
+        {
             if (prop == null)
             {
                 return string.Empty;
@@ -28,7 +32,7 @@ namespace bot.model
             return (attr as FieldAttribute).Title;
         }
 
-        public static string Field(this Config config, Func<Config, string> propertyFunc)
+        public static string GetField(this Config config, Func<Config, string> propertyFunc)
         {
             var prop = typeof(Config).GetProperty(propertyFunc(config));
             if (prop == null)
@@ -44,9 +48,9 @@ namespace bot.model
             return (attr as FieldAttribute).Title;
         }
 
-        public static void Set(this Config config, string field, object value)
+        public static void SetField(this object config, string field, object value)
         {
-            var props = typeof(Config).GetProperties();
+            var props = config.GetType().GetProperties();
 
             PropertyInfo propertyInfo = null;
 
@@ -66,5 +70,9 @@ namespace bot.model
             }
             propertyInfo.SetValue(config, Convert.ChangeType(value, propertyInfo.PropertyType));
         }
+
+
+
+
     }
 }

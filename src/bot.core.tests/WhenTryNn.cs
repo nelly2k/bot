@@ -19,10 +19,9 @@ namespace bot.core.tests
             var network = new ActivationNetwork(function,
                 inputsCount: 2, neuronsCount: new[] { 2, 1 });
 
-            var teacher = new LevenbergMarquardtLearning(network)
-            {
-                UseRegularization = true
-            };
+            var layer = network.Layers[0] as ActivationLayer;
+            var teacher = new PerceptronLearning(network);
+            teacher.LearningRate = 0.1;
 
             var input = new double[4][];
             input[0] = new[] { 0d, 0d };
@@ -42,6 +41,13 @@ namespace bot.core.tests
             double error = double.PositiveInfinity;
             double previous;
 
+            var needToStop = false;
+
+            while (!needToStop)
+            {
+                
+            }
+
             do
             {
                 previous = error;
@@ -52,6 +58,8 @@ namespace bot.core.tests
             } while (Math.Abs(previous - error) > 0.01 );
 
              int[] answers = input.Apply(network.Compute).GetColumn(0).Apply(System.Math.Sign);
+			 
+			 //https://github.com/accord-net/framework/blob/development/Samples/Neuro/Perceptron/Applications/OneLayerPerceptron.cs
         }
     }
 }

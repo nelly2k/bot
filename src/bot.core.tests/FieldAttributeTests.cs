@@ -8,7 +8,7 @@ namespace bot.core.tests
         [Test]
         public void GetConfigName()
         {
-            Assert.That(typeof(Config).Field(x => nameof(x.LoadIntervalMinutes)), Is.EqualTo("load_interval_minutes"));
+            Assert.That(typeof(Config).GetField(x => nameof(x.LoadIntervalMinutes)), Is.EqualTo("load interval minutes"));
         }
 
         [Test]
@@ -16,19 +16,29 @@ namespace bot.core.tests
         {
             var config = new Config();
             object ob = 154;
-            config.Set("load_interval_minutes", ob);
+            config.SetField("load interval minutes", ob);
 
             Assert.That(config.LoadIntervalMinutes, Is.EqualTo(154));
         }
 
         [Test]
-        public void SetBoolean()
+        public void SetString()
         {
             var config = new Config();
-            object ob = 1;
-            config.Set("is_market", ob);
+            object ob = "ZUSD";
+            config.SetField("base currency", ob);
 
             Assert.That(config["ETHUSD"].IsMarket, Is.True);
+        }
+
+        [Test]
+        public void SetBoolean()
+        {
+            var config = new PairConfig();
+            object ob = true;
+            config.SetField("is load", ob);
+
+            Assert.That(config.ShouldLoad, Is.True);
         }
     }
 }
