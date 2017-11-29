@@ -1,5 +1,6 @@
+
 create database bot;
-go
+--go
 use bot;
 
 --create table Pairs(
@@ -36,32 +37,6 @@ create table config(
 	value nvarchar(100),
 	constraint pk_config primary key (platform, pair, name)
 )
-
-
-insert into config values ('kraken', 'load_interval_minutes',3)
-insert into config values ('kraken', 'analyse_load_hours', 12)
-insert into config values ('kraken', 'analyse_group_period_minutes',3)
-insert into config values ('kraken', 'analyse_treshold_minutes',10)
-insert into config values ('kraken', 'analyse_macd_slow',20)
-insert into config values ('kraken', 'analyse_macd_slow_threshold',0.00)
-insert into config values ('kraken', 'analyse_macd_fast',10)
-insert into config values ('kraken', 'analyse_macd_signal',5)
-insert into config values ('kraken', 'analyse_rsi_ema_periods',14)
-insert into config values ('kraken', 'analyse_rsi_low',35)
-insert into config values ('kraken', 'analyse_rsi_high',70)
-insert into config values ('kraken', 'api_key','')
-insert into config values ('kraken', 'api_secret','')
-insert into config values ('kraken', 'max_missed_sells',3)
-insert into config values ('kraken', 'pair_percent','ETHUSD|80')
-insert into config values ('kraken', 'base_currency','ZUSD')
-insert into config values ('kraken', 'analyse_amcd_group_perios_minutes_slow',20)
-insert into config values ('kraken', 'pair_load','ETHUSD')
-insert into config values ('kraken', 'pair_load','XBTUSD')
-insert into config values ('kraken', 'min_volume','ETHUSD|0.02');
-
-ALTER table config
-add constraint pk_config PRIMARY KEY (platform, name, value)
-
 
 create table log(
 	platform nvarchar(50),

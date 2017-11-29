@@ -74,7 +74,8 @@ namespace bot.core
 
             foreach (var baseAttribute in baseAttributes)
             {
-                await InsertIfNotExists(platform, pair, baseAttribute.GetField(), baseAttribute.GetValue(config).ToString());
+                Console.WriteLine($"Insert {baseAttribute.Name}");
+                await InsertIfNotExists(platform, pair, baseAttribute.GetField(), baseAttribute.GetValue(config)?.ToString()?? string.Empty);
             }
 
         }
