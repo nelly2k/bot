@@ -46,22 +46,7 @@ namespace bot.core.Extensions
                 return TradeStatus.Buy;
             }
 
-            return TradeStatus.Unknown;
-            //var sum = Math.Abs(last.Macd - last.Signal);
-            //for (var i = 1; i < 3; i++)
-            //{
-            //    var next = Math.Abs(lastThree[i].Macd - lastThree[i].Signal);
-            //    if (sum < next)
-            //    {
-            //        sum = next;
-            //    }
-            //    else
-            //    {
-            //        return TradeStatus.Unknown;
-            //    }
-            //}
-
-            //return TradeStatus.Buy;
+            return TradeStatus.Sell;
         }
 
         public static MacdAnalysisResult MacdAnalysis(this IEnumerable<MacdResultItem> macd)
@@ -82,7 +67,9 @@ namespace bot.core.Extensions
                     result.CrossType = CrossType.MacdFalls;
                     result.Trade = new BaseTrade
                     {
-                        DateTime = previous.DateTime
+                        DateTime = previous.DateTime,
+                        Price = previous.Macd,
+                        Volume = previous.Signal
                     };
                     break;
                 }
@@ -92,7 +79,9 @@ namespace bot.core.Extensions
                     result.CrossType = CrossType.MacdRises;
                     result.Trade = new BaseTrade
                     {
-                        DateTime = previous.DateTime
+                        DateTime = previous.DateTime,
+                        Price = previous.Macd,
+                        Volume = previous.Signal
                     };
                     break;
                 }
@@ -193,5 +182,12 @@ namespace bot.core.Extensions
     public enum CrossType
     {
         MacdFalls, MacdRises
+    }
+
+    public enum PriceStatus
+    {
+        GoingFall,
+        GoinRaise,
+        Unknown
     }
 }

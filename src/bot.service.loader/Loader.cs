@@ -29,7 +29,9 @@ namespace bot.service.loader
             _container = new UnityContainer();
             _container.RegisterInstance(new Config());
             _container.RegisterAssembleyWith<ITradeRepository>();
+            _container.RegisterAssembleyWith<IKrakenRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
+            _container.RegisterType<IExchangeConfig, KrakenConfig>("kraken");
             _container.RegisterDateTime();
             _container.RegisterInstance<IRandom>(new MyRandom());
             _fileService = _container.Resolve<IFileService>();
@@ -74,8 +76,7 @@ namespace bot.service.loader
             }
             catch (Exception ex)
             {
-                _fileService.Write("loader", ex.Message);
-                _fileService.Write("loader", ex.StackTrace);
+                _fileService.Write("loader", ex);
             }
             finally
             {

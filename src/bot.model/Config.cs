@@ -2,7 +2,11 @@
 
 namespace bot.model
 {
-    public class Config:IApiCredentials
+    public interface IConfig
+    {
+        
+    }
+    public class Config:IApiCredentials, IConfig
     {
         public Dictionary<string, PairConfig> Pairs { get; set; } = new Dictionary<string, PairConfig>();
 
@@ -14,6 +18,9 @@ namespace bot.model
         public string Key{ get; set; }
         [Field("secret")]
         public string Secret{ get; set; }
+
+        [Field("log prefix")]
+        public string LogPrefix { get; set; } = "bot";
 
         public PairConfig this[string key]
         {
@@ -29,7 +36,7 @@ namespace bot.model
        
     }
 
-    public class PairConfig
+    public class PairConfig: IConfig
     {
         /// <summary>
         /// Going to load trading data from platform to database
@@ -79,9 +86,9 @@ namespace bot.model
         /// ETA 
         /// </summary>
         [Field("macd short slow")]
-        public int MacdShortSlow { get; set; } = 20;
+        public int MacdSlow { get; set; } = 20;
         [Field("macd short fast")]
-        public int MacdShortFast { get; set; } = 10;
+        public int MacdFast { get; set; } = 10;
         [Field("macd short signal")]
         public int MacdSignal { get; set; } = 5;
         [Field("rsi ema")]
@@ -94,7 +101,6 @@ namespace bot.model
         public int MaxMissedSells { get; set; } = 4;
         [Field("min volume")]
         public decimal MinVolume { get; set; } = 0.02m;
-
         /// <summary>
         /// Number of digits after dot for price
         /// pair_decimal
@@ -114,5 +120,12 @@ namespace bot.model
         /// </summary>
         [Field("share")]
         public int Share { get; set; } = 95;
+
+        public Dictionary<string, object> PlatformVariables { get; set; }
+
+        public override string ToString()
+        {
+            return $"[group: {GroupMinutes}] [threshold:{ThresholdMinutes}] [group long: {GroupForLongMacdMinutes}]";
+        }
     }
 }

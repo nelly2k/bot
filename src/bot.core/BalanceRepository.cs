@@ -7,38 +7,40 @@ namespace bot.core
 {
     public interface IBalanceRepository : IService
     {
-        Task Add(string platform, string pair, decimal volume, decimal price);
-        Task Remove(string platform, string pair);
+        Task Add(string platform, string pair, decimal volume, decimal price, bool isBorrowed);
+        Task Remove(string platform, string pair, bool isBorrowed);
         Task<List<BalanceItem>> Get(string platform, string pair);
     }
 
     public class BalanceRepository : BaseRepository, IBalanceRepository
     {
-        public async Task Add(string platform, string pair, decimal volume, decimal price)
+        public async Task Add(string platform, string pair, decimal volume, decimal price, bool isBorrowed)
         {
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "INSERT INTO balance (platform, name, volume, price) VALUES (@platform, @pair, @volume, @price)";
+                    "INSERT INTO balance (platform, name, volume, price, isBorrowed) VALUES (@platform, @pair, @volume, @price, @isBorrowed)";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);
                 cmd.Parameters.AddWithValue("@volume", volume);
                 cmd.Parameters.AddWithValue("@price", price);
+                cmd.Parameters.AddWithValue("@isBorrowed", isBorrowed);
 
                 await cmd.ExecuteNonQueryAsync();
             });
         }
 
-        public async Task Remove(string platform, string pair)
+        public async Task Remove(string platform, string pair, bool isBorrowed)
         {
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    "update balance set isDeleted=1 where platform=@platform and name=@pair";
+                    "update balance set isDeleted=1 where platform=@platform and name=@pair and isBorrowed=@isBorrowed";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);
+                cmd.Parameters.AddWithValue("@isBorrowed", isBorrowed);
 
                 await cmd.ExecuteNonQueryAsync();
             });
@@ -51,7 +53,7 @@ namespace bot.core
             await Execute(async cmd =>
             {
                 cmd.CommandText =
-                    @"select volume, price, notSoldCounter, notSoldDate, boughtDate from balance where platform=@platform and name=@pair and isDeleted=0";
+                    @"select volume, price, notSoldCounter, notSoldDate, boughtDate, isBorrowed from balance where platform=@platform and name=@pair and isDeleted=0";
 
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@pair", pair);
@@ -68,6 +70,7 @@ namespace bot.core
                         NotSold = reader.GetInt32(2),
                         NotSoldtDate = reader.IsDBNull(3) ? (DateTime?)null : reader.GetDateTime(3),
                         BoughtDate = reader.GetDateTime(4),
+                        IsBorrowed = reader.GetBoolean(5)
                     });
                 }
 

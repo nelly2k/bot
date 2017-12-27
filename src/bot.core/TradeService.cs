@@ -1,19 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using bot.core.Extensions;
 using bot.model;
 
 namespace bot.core
 {
-    public interface ITradeService : IService
-    {
-        Task Trade();
-        Task Trade(IExchangeClient client, string pair);
-    }
-
     public class TradeService : ITradeService
     {
         private readonly ITradeRepository _tradeRepository;
@@ -22,12 +15,11 @@ namespace bot.core
         private readonly Config _config;
         private readonly IOrderService _orderService;
         private readonly IExchangeClient[] _exchangeClients;
-        private readonly ILogRepository _logRepository;
         private readonly IFileService _fileService;
         private readonly IStatusService _statusService;
 
         public TradeService(ITradeRepository tradeRepository, IDateTime dateTime, IEventRepository eventRepository, Config config,
-            IOrderService orderService, IExchangeClient[] exchangeClients, ILogRepository logRepository, IFileService fileService, IStatusService statusService)
+            IOrderService orderService, IExchangeClient[] exchangeClients, IFileService fileService, IStatusService statusService)
         {
             _tradeRepository = tradeRepository;
             _dateTime = dateTime;
@@ -35,7 +27,6 @@ namespace bot.core
             _config = config;
             _orderService = orderService;
             _exchangeClients = exchangeClients;
-            _logRepository = logRepository;
             _fileService = fileService;
             _statusService = statusService;
         }
@@ -44,99 +35,167 @@ namespace bot.core
         {
             foreach (var client in _exchangeClients)
             {
-                try
-                {
-                    await _orderService.CheckOperations(client);
-                    await _orderService.CheckOpenOrders(client);
+                await CheckOutstanding(client);
 
-                    foreach (var tradePair in _config.Pairs)
-                    {
-                        try
-                        {
-                            await Trade(client, tradePair.Key);
-                        }
-                        finally
-                        {
-                            _fileService.Write(tradePair.Key, "----------------------------------------------------");
-                        }
-                       
-                    }
-
-                }
-                catch (Exception e)
+                foreach (var tradePair in _config.Pairs.Where(x => x.Value.ShouldTrade))
                 {
-                    _fileService.Write("error", $"{DateTime.Now:G} {e.Message}");
-                    _fileService.Write("error", e.StackTrace);
-                    await _logRepository.Log(client.Platform, "Error", e.StackTrace);
+                    _fileService.StartSession(tradePair.Key);
+                    _fileService.GatherDetails(tradePair.Key, FileSessionNames.Date, _dateTime.Now.ToString("G"));
+                    await TradePair(client, tradePair);
+                    _fileService.CloseSession(tradePair.Key);
                 }
-                
+            }
+        }
+
+        private async Task TradePair(IExchangeClient client, KeyValuePair<string, PairConfig> tradePair)
+        {
+            try
+            {
+                await Trade(client, tradePair.Key);
+            }
+            catch (Exception ex)
+            {
+                _fileService.Write(tradePair.Key, ex);
+            }
+        }
+
+        private async Task CheckOutstanding(IExchangeClient client)
+        {
+            try
+            {
+                await _orderService.CheckOperations(client);
+                await _orderService.CheckOpenOrders(client);
+            }
+            catch (Exception e)
+            {
+                _fileService.Write("general", e);
             }
         }
 
         public async Task Trade(IExchangeClient client, string pair)
         {
             var currentStatus = await _statusService.GetCurrentStatus(client.Platform, pair);
+
+            _fileService.GatherDetails(pair, FileSessionNames.Status, currentStatus.ToString());
+
             await _eventRepository.UpdateLastEvent(client.Platform, $"{EventConstant.Trade} {pair}", string.Empty);
             var dt = _dateTime.Now.AddHours(-_config[pair].LoadHours);
             var trades = (await _tradeRepository.LoadTrades(pair, dt, _dateTime.Now)).ToList();
             var groupedTrades = trades.GroupAll(_config[pair].GroupMinutes, GroupBy.Minute).ToList();
-            var groupedTradesSlow = trades.GroupAll(_config[pair].GroupForLongMacdMinutes, GroupBy.Minute).ToList().Cast<IDateCost>().ToList();
+            var groupedTradesSlow = trades.GroupAll(_config[pair].GroupForLongMacdMinutes, GroupBy.Minute).ToList()
+                .Cast<IDateCost>().ToList();
 
             var newStatus = FindStatusFromTrades(groupedTrades.Cast<IDateCost>().ToList(), groupedTradesSlow, pair);
-            _fileService.Write(pair, $"Price [buy: {Math.Round(groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceBuyAvg, 2)}]" +
-                               $" [sell: {Math.Round(groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceSellAvg, 2)}]");
+
+            _fileService.GatherDetails(pair, FileSessionNames.PriceSell,
+                groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceSellAvg);
+            _fileService.GatherDetails(pair, FileSessionNames.PriceBuy,
+                groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last().PriceBuyAvg);
+            _fileService.GatherDetails(pair, FileSessionNames.Volume, groupedTrades.Last().Volume);
+
             if (currentStatus == newStatus || newStatus == TradeStatus.Unknown)
             {
                 return;
             }
+
             switch (newStatus)
             {
                 case TradeStatus.Buy:
-                    {
-                        var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
-                        await _orderService.Buy(client, pair, Math.Round(lastTrade.PriceBuyAvg, 2));
-                        await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Buy, pair);
-                        break;
-                    }
+                    await Buy(client, pair, groupedTrades);
+                    await Return(client, pair, groupedTrades);
+                    await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Buy, pair);
+                    break;
                 case TradeStatus.Sell:
-                    {
-                        var lastTrade = groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
-                        var sellResult = await _orderService.Sell(client, pair, Math.Round(lastTrade.PriceSellAvg, 2));
-                        if (sellResult)
-                        {
-                            await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
-                        }
-                        break;
-                    }
+                    await Sell(client, pair, groupedTrades);
+                    await Borrow(client, pair, groupedTrades);
+                    break;
+                default:
+                    return;
             }
         }
 
+        private async Task Sell(IExchangeClient client, string pair, List<GroupResult> groupedTrades)
+        {
+            var lastTrade = groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
+            var sellResult =
+                await _orderService.Sell(client, pair, Math.Round(lastTrade.PriceSellAvg, _config[pair].PriceFormat));
+            if (sellResult)
+            {
+                await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
+            }
+        }
+
+        private async Task Return(IExchangeClient client, string pair, List<GroupResult> groupedTrades)
+        {
+            var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
+            var result = await _orderService.Return(client, pair, Math.Round(lastTrade.PriceBuyAvg, _config[pair].PriceFormat));
+            if (result)
+            {
+                await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, pair);
+            }
+        }
+
+        private async Task Borrow(IExchangeClient client, string pair, List<GroupResult> groupedTrades)
+        {
+            var lastTrade = groupedTrades.Where(x => x.PriceSellAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
+            await _orderService.Borrow(client, pair, Math.Round(lastTrade.PriceSellAvg, _config[pair].PriceFormat));
+        }
+
+
+        private async Task Buy(IExchangeClient client, string pair, List<GroupResult> groupedTrades)
+        {
+            var lastTrade = groupedTrades.Where(x => x.PriceBuyAvg != decimal.Zero).OrderBy(x => x.DateTime).Last();
+            await _orderService.Buy(client, pair, Math.Round(lastTrade.PriceBuyAvg, _config[pair].PriceFormat));
+            
+        }
+
+
         public TradeStatus FindStatusFromTrades(List<IDateCost> groupedTrades, List<IDateCost> groupedTradesSlow, string pair)
         {
-            var macd = groupedTrades.Macd(_config[pair].MacdShortSlow, _config[pair].MacdShortFast, _config[pair].MacdSignal).MacdAnalysis();
-            _fileService.Write(pair, $"MACD_F [status:{(macd.CrossType == CrossType.MacdFalls ? "Sell" : "Buy")}] [since:{(int)(_dateTime.Now - macd.Trade.DateTime).TotalMinutes}]");
+            var macd = groupedTrades.Macd(_config[pair].MacdSlow, _config[pair].MacdFast, _config[pair].MacdSignal);
+            var macdAnalysis = macd.MacdAnalysis();
+
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Analysis, macdAnalysis.CrossType.ToString());
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Value, macdAnalysis.Trade.Price);
+            var macdTrade = macdAnalysis.Trade as BaseTrade;
+            if (macdTrade != null)
+            {
+                _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Signal, macdAnalysis.Trade.Price);
+            }
+
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Minutes, (_dateTime.Now - macdAnalysis.Trade.DateTime).TotalMinutes);
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Decision, macdAnalysis.CrossType == CrossType.MacdFalls ? "sell" : "buy");
+
+
             var rsiLastPeak = groupedTrades.RelativeStrengthIndex(_config[pair].RsiEmaPeriods)
                 .GetPeaks(_config[pair].RsiLow, _config[pair].RsiHigh).OrderByDescending(x => x.PeakTrade.DateTime)
                 .FirstOrDefault();
             if (rsiLastPeak != null)
             {
-                _fileService.Write(pair,
-                    $"RSI [status:{(rsiLastPeak.PeakType == PeakType.High ? "Sell" : "Buy")}] [since:{(int)(_dateTime.Now - rsiLastPeak.ExitTrade.DateTime).TotalMinutes}]");
+                _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis, rsiLastPeak.PeakType.ToString());
+                _fileService.GatherDetails(pair, FileSessionNames.RSI_Peak, rsiLastPeak.PeakTrade.Price);
+                _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis_Minutes, (_dateTime.Now - rsiLastPeak.ExitTrade.DateTime).TotalMinutes);
+                _fileService.GatherDetails(pair, FileSessionNames.RSI_Decision, rsiLastPeak.PeakType == PeakType.High ? "sell" : "buy");
             }
             else
             {
-                _fileService.Write(pair, "No RSI Peaks found");
+                _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis, "No Peaks Found");
             }
 
-            var macdSlow = groupedTradesSlow.Macd(_config[pair].MacdShortSlow, _config[pair].MacdShortFast, _config[pair].MacdSignal).ToList();
+            var macdSlow = groupedTradesSlow.Macd(_config[pair].MacdSlow, _config[pair].MacdFast, _config[pair].MacdSignal).ToList();
 
             var macdSlowAnalysis = macdSlow.MacdSlowAnalysis();
-            _fileService.Write(pair, $"MACD_S [macd:{Math.Round(macdSlow.Last().Macd, 2)}] [signal:{Math.Round(macdSlow.Last().Signal, 2)}]");
-            _fileService.Write(pair, $"MACD_S [status:{macdSlowAnalysis.ToString()}]");
 
-            var status = AnalysisExtensions.AnalyseIndeces(_config[pair].ThresholdMinutes, _dateTime.Now, macd, rsiLastPeak, macdSlowAnalysis);
-            _fileService.Write(pair, $"Analysis [status:{status.ToString()}]");
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Slow_Analysis, macdSlowAnalysis.ToString());
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Slow_Analysis_Value, macdSlow.Last().Macd);
+            _fileService.GatherDetails(pair, FileSessionNames.MACD_Slow_Analysis_Signal, macdSlow.Last().Signal);
+
+
+            var status = AnalysisExtensions.AnalyseIndeces(_config[pair].ThresholdMinutes, _dateTime.Now, macdAnalysis, rsiLastPeak, macdSlowAnalysis);
+
+            _fileService.GatherDetails(pair, FileSessionNames.Analysis, status.ToString());
             return status;
         }
+
     }
 }

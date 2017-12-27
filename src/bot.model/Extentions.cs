@@ -11,7 +11,7 @@ namespace bot.model
             return (TEnum)Enum.Parse(typeof(TEnum), str);
         }
 
-        public static string GetField(this Type type, Func<Config,string> propertyFunc)
+        public static string GetField(this Type type, Func<Config, string> propertyFunc)
         {
             var prop = type.GetProperty(propertyFunc(new Config()));
             return prop.GetField();
@@ -48,31 +48,22 @@ namespace bot.model
             return (attr as FieldAttribute).Title;
         }
 
-        public static void SetField(this object config, string field, object value)
+        public static bool HasField<T>(this T config, string field) where T : IConfig
         {
-            var props = config.GetType().GetProperties();
+            var props = typeof(T).GetProperties();
+            return props.Any(x => x.GetCustomAttributes<FieldAttribute>().Any(p => p.Title == field));
+        }
 
-            PropertyInfo propertyInfo = null;
-
-            foreach (var prop in props)
-            {
-                var attr = prop.GetCustomAttributes(typeof(FieldAttribute)).FirstOrDefault(x => (x as FieldAttribute)?.Title == field);
-                if (attr != null)
-                {
-                    propertyInfo = prop;
-                    break;
-                }
-            }
-
+        public static void SetField<T>(this T config, string field, object value) where T : IConfig
+        {
+            var propertyInfo = typeof(T).GetProperties().FirstOrDefault(x =>
+                x.GetCustomAttributes<FieldAttribute>().Any(r => r.Title == field));
             if (propertyInfo == null)
             {
                 return;
             }
             propertyInfo.SetValue(config, Convert.ChangeType(value, propertyInfo.PropertyType));
         }
-
-
-
 
     }
 }

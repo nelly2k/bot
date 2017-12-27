@@ -53,6 +53,9 @@
   <ItemGroup>
     <Compile Include="CredentialsInvalidException.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="IKrakenRepository.cs" />
+    <Compile Include="KrakenConfig.cs" />
+    <Compile Include="KrakenRepository.cs" />
     <Compile Include="KrakenService.cs" />
     <Compile Include="Model\Asset.cs" />
     <Compile Include="Model\AssetPair.cs" />
@@ -63,6 +66,7 @@
     <Compile Include="Model\ServerTime.cs" />
     <Compile Include="Model\SubmitOrder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TradeBalanceType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

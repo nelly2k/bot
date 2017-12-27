@@ -30,6 +30,8 @@ create table trades(
 )
 
 
+create index tradeDateTimeIndex on trades (tradeTime)
+
 create table config(
 	platform nvarchar(50),
 	pair nvarchar(50),
@@ -62,6 +64,7 @@ create table balance(
 	notSoldCounter int  constraint df_notSoldCounter default (0),
 	notSoldDate DateTime,
 	boughtDate Datetime constraint df_boughtDate default (getdate()),
+	isBorrowed bit constraint df_balance_isBorrowed default (0) not null,
 	isDeleted bit constraint df_balance_isDelete default (0)
 )
 

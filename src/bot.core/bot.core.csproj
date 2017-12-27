@@ -60,6 +60,8 @@
     <Compile Include="ConnectivityService.cs" />
     <Compile Include="DateTimeService.cs" />
     <Compile Include="EventRepository.cs" />
+    <Compile Include="IConfigRepository.cs" />
+    <Compile Include="ITradeService.cs" />
     <Compile Include="LogRepository.cs" />
     <Compile Include="MailService.cs" />
     <Compile Include="MoneyService.cs" />

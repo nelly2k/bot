@@ -13,7 +13,9 @@ namespace bot.model
 
         Task<decimal> GetBaseCurrencyBalance();
         Task<List<string>> GetOrdersIds(int userref);
-        Task<List<string>> Buy(decimal volume, string pair, decimal? price=null, int? operationId=null);
-        Task<List<string>> Sell(decimal volume, string pair, decimal? price = null, int? operationId = null);
+        Task<List<string>> Buy(decimal volume, string pair, decimal? price = null, int? operationId = null, bool isReturn = false);
+        Task<List<string>> Sell(decimal volume, string pair, decimal? price = null, int? operationId = null, bool isBorrow = false);
+
+        Task<decimal> GetAvailableMargin(string asset);
     }
 }

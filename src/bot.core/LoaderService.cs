@@ -18,15 +18,17 @@ namespace bot.core
         private readonly IEventRepository _eventRepository;
         private readonly ILogRepository _logRepository;
         private readonly Config _config;
+        private readonly IFileService _fileService;
 
         public LoaderService(ITradeRepository tradeRepository, IExchangeClient[] clients,
-            IEventRepository eventRepository,ILogRepository logRepository, Config config )
+            IEventRepository eventRepository,ILogRepository logRepository, Config config, IFileService fileService)
         {
             _tradeRepository = tradeRepository;
             _clients = clients;
             _eventRepository = eventRepository;
             _logRepository = logRepository;
             _config = config;
+            _fileService = fileService;
         }
 
         public async Task Load()
@@ -47,8 +49,7 @@ namespace bot.core
                     }
                     catch (Exception e)
                     {
-                        await _logRepository.Log(client.Platform, $"Error {eventName}", e.Message);
-                        await _logRepository.Log(client.Platform, $"Error {eventName}", e.StackTrace);
+                        _fileService.Write(pair, e);
                     }
                 }
             }

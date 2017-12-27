@@ -8,6 +8,6 @@
         public OrderStatus OrderStatus { get; set; }
         public string Pair { get; set; }
         public OrderType OrderType { get; set; }
-        
+        public bool IsBorrowed { get; set; }
     }
 }

@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.service.trader", "bot.s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.core.ai", "bot.core.ai\bot.core.ai.csproj", "{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot.integration.tests", "bot.integration.tests\bot.integration.tests.csproj", "{8C383358-DB94-4312-9FFA-72424609EC83}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{374EE146-A3AB-4693-A27C-E1E56EE8A6D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C383358-DB94-4312-9FFA-72424609EC83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C383358-DB94-4312-9FFA-72424609EC83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C383358-DB94-4312-9FFA-72424609EC83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C383358-DB94-4312-9FFA-72424609EC83}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -66,6 +72,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{378CBA66-4A35-4396-935C-F2FB248A2B84} = {71A4EC08-7439-42C2-A606-55BA3933BE98}
 		{FE50E5C4-8EDF-4688-ADAF-DE9CFA4B3F03} = {71A4EC08-7439-42C2-A606-55BA3933BE98}
+		{8C383358-DB94-4312-9FFA-72424609EC83} = {71A4EC08-7439-42C2-A606-55BA3933BE98}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8AA32A69-B87A-4246-B1FE-0844B86D7695}

@@ -28,9 +28,12 @@ namespace bot.service.trader
             _container = new UnityContainer();
             _container.RegisterInstance(new Config());
             _container.RegisterAssembleyWith<ITradeRepository>();
+            _container.RegisterAssembleyWith<IKrakenRepository>();
             _container.RegisterType<IExchangeClient, KrakenClientService>("kraken");
+            _container.RegisterType<IExchangeConfig, KrakenConfig>("kraken");
             _container.RegisterDateTime();
             _container.RegisterInstance<IRandom>(new MyRandom());
+            _container.RegisterType<IFileService, FileService>(new ContainerControlledLifetimeManager());
             _fileService = _container.Resolve<IFileService>();
         }
 
@@ -53,21 +56,20 @@ namespace bot.service.trader
                 {
                     config = configResponse.Result;
 
-                }).Wait();
+                }).Wait(); 
                 if (config == null)
                 {
-                    _fileService.Write("error",$"{DateTime.Now:G} Config wasn't loaded");
+                    _fileService.Write("error","Config wasn't loaded");
                     return;
                 }
                 _container.RegisterInstance(config);
-                
+
                 var tradeService = _container.Resolve<ITradeService>();
                 tradeService.Trade().ContinueWith(task =>
                 {
                     if (task.Exception != null)
                     {
-                        _fileService.Write("error", $"{DateTime.Now:G} {task.Exception.Message}");
-                        _fileService.Write("error", task.Exception.StackTrace);
+                        _fileService.Write("error", task.Exception);
                     }
                     _timer.Start();
                 }).Wait();
@@ -77,8 +79,7 @@ namespace bot.service.trader
             }
             catch (Exception ex)
             {
-                _fileService.Write("error", $"{DateTime.Now:G} {ex.Message}");
-                _fileService.Write("error", ex.StackTrace);
+                _fileService.Write("error", ex);
             }
             finally
             {

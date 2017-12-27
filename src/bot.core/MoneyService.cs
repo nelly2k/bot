@@ -5,25 +5,33 @@ namespace bot.core
 {
     public interface IMoneyService:IService
     {
-        CurrencyAmountResult Transform(decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent, FeeSource feeSource = FeeSource.Base);
-        decimal FeeToPay(decimal volume, decimal price, decimal feePercent);
+        CurrencyAmountResult Transform(string pair, decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent, FeeSource feeSource = FeeSource.Base);
+        decimal FeeToPay(string pair, decimal volume, decimal price, decimal feePercent);
     }
 
     public class MoneyService : IMoneyService
     {
-        public CurrencyAmountResult Transform(decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent, FeeSource feeSource = FeeSource.Base)
+        private readonly Config _config;
+
+        public MoneyService(Config config)
+        {
+            _config = config;
+        }
+
+        public CurrencyAmountResult Transform(string pair, decimal baseCurrencyAmount, decimal currencyPrice, decimal feePercent, FeeSource feeSource = FeeSource.Base)
         {
             var result = new CurrencyAmountResult();
+            var rounding = 10 * _config[pair].VolumeFormat;
             switch (feeSource)
             {
                 case FeeSource.Base:
                     result.Fee = Math.Round(baseCurrencyAmount * feePercent / 100, 2);
-                    result.TargetCurrencyAmount = Math.Floor((baseCurrencyAmount - result.Fee) / currencyPrice * 1000) / 1000m;
+                    result.TargetCurrencyAmount = Math.Floor((baseCurrencyAmount - result.Fee) / currencyPrice * rounding) / rounding;
                     result.BaseCurrencyRest = baseCurrencyAmount - (result.TargetCurrencyAmount * currencyPrice + result.Fee);
                     break;
                 case FeeSource.Target:
                     var baseUsd = currencyPrice * baseCurrencyAmount;
-                    result.Fee = Math.Round(baseUsd * feePercent / 100, 2);
+                    result.Fee = Math.Round(baseUsd * feePercent / 100, _config[pair].PriceFormat);
                     result.BaseCurrencyRest = decimal.Zero;
                     result.TargetCurrencyAmount = baseUsd - result.Fee;
                     break;
@@ -32,9 +40,9 @@ namespace bot.core
             return result;
         }
         
-        public decimal FeeToPay(decimal volume, decimal price, decimal feePercent)
+        public decimal FeeToPay(string pair, decimal volume, decimal price, decimal feePercent)
         {
-            return Math.Round(volume * price * feePercent / 100,2);
+            return Math.Round(volume * price * feePercent / 100, _config[pair].PriceFormat);
         }
     }
 

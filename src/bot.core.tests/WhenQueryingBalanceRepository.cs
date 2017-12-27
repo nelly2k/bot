@@ -13,7 +13,7 @@ namespace bot.core.tests
             var notSoldRepository = new NotSoldRepository();
             var platform = "testPlatform";
             var pair = "testPair";
-            await balanceRepository.Add(platform, pair, 0.25m, 222.56m);
+            await balanceRepository.Add(platform, pair, 0.25m, 222.56m, false);
 
             var get = await balanceRepository.Get(platform, pair);
             Assert.That(get.Count, Is.EqualTo(1));
@@ -30,7 +30,7 @@ namespace bot.core.tests
             one = (await balanceRepository.Get(platform, pair)).First();
             Assert.That(one.NotSold, Is.EqualTo(2));
 
-            await balanceRepository.Remove(platform, pair);
+            await balanceRepository.Remove(platform, pair, false);
 
             get = await balanceRepository.Get(platform, pair);
             Assert.That(get.Count, Is.EqualTo(0));

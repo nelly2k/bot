@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using bot.core;
 using bot.core.Extensions;
+using bot.kraken;
+using bot.model;
 using NUnit.Framework;
 
-namespace bot.core.tests
+namespace bot.integration.tests
 {
-    public class Integration
+    public class CalculationOutput
     {
         private TradeRepository _tradeRepository;
         private DateTime _dt;
-        private const string AltName = "XBTUSD";
+        private const string AltName = "ETHUSD";
 
         [SetUp]
         public void Setup()
@@ -23,18 +26,19 @@ namespace bot.core.tests
         [Test]
         public async Task  AllTogether()
         {
-            var configRepo = new ConfigRepository();
+            var configRepo = new ConfigRepository(new List<IExchangeConfig>{new KrakenConfig()}.ToArray());
 
             var config = await configRepo.Get();
             config[AltName].GroupMinutes = 15;
-            _dt = DateTime.Now.AddHours(-12);
+            config[AltName].GroupForLongMacdMinutes = 60;
+            _dt = DateTime.Now.AddHours(-26);
             var trades = (await _tradeRepository.LoadTrades(AltName, _dt)).ToList();
             var grouped = trades.GroupAll(config[AltName].GroupMinutes, GroupBy.Minute).ToList();
-            var macd = grouped.Macd(config[AltName].MacdShortSlow, config[AltName].MacdShortFast, config[AltName].MacdSignal).ToList();
+            var macd = grouped.Macd(config[AltName].MacdSlow, config[AltName].MacdFast, config[AltName].MacdSignal).ToList();
             var rsi = grouped.RelativeStrengthIndex(config[AltName].RsiEmaPeriods);
             
             var grouped2 = trades.GroupAll(config[AltName].GroupForLongMacdMinutes, GroupBy.Minute).ToList();
-            var macd2 = grouped2.Macd(config[AltName].MacdShortSlow, config[AltName].MacdShortFast, config[AltName].MacdSignal).ToList();
+            var macd2 = grouped2.Macd(config[AltName].MacdSlow, config[AltName].MacdFast, config[AltName].MacdSignal).ToList();
 
             var lines = (from m in macd
                          join r in rsi on m.DateTime equals r.DateTime

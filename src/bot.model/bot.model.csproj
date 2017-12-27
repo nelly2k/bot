@@ -47,6 +47,7 @@
     <Compile Include="IApiCredentials.cs" />
     <Compile Include="IDateTime.cs" />
     <Compile Include="IExchangeClient.cs" />
+    <Compile Include="IExchangeConfig.cs" />
     <Compile Include="IRandom.cs" />
     <Compile Include="IService.cs" />
     <Compile Include="ITrade.cs" />
