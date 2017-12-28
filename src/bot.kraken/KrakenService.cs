@@ -104,12 +104,12 @@ namespace bot.kraken
 
             if (isReturn && _krakenConfig.PairVariables[KrakenConfig.ShortLaverage] != null)
             {
-                additionalParams.Add("laverage", _krakenConfig.PairVariables[KrakenConfig.ShortLaverage].ToString());
+                additionalParams.Add("leverage", _krakenConfig.PairVariables[KrakenConfig.ShortLaverage].ToString());
             }
 
             if (!isReturn && _krakenConfig.PairVariables[KrakenConfig.LongLaverage] != null)
             {
-                additionalParams.Add("laverage", _krakenConfig.PairVariables[KrakenConfig.LongLaverage].ToString());
+                additionalParams.Add("leverage", _krakenConfig.PairVariables[KrakenConfig.LongLaverage].ToString());
             }
 
             return await AddOrder(OrderType.buy, price.HasValue ? "limit" : "market", volume, pair, price, operationId, additionalParams);
@@ -121,12 +121,12 @@ namespace bot.kraken
 
             if (isBorrow && _krakenConfig.PairVariables[KrakenConfig.ShortLaverage]!=null)
             {
-                additionalParams.Add("laverage", _krakenConfig.PairVariables[KrakenConfig.ShortLaverage].ToString());
+                additionalParams.Add("leverage", _krakenConfig.PairVariables[KrakenConfig.ShortLaverage].ToString());
             }
 
             if (!isBorrow && _krakenConfig.PairVariables[KrakenConfig.LongLaverage] != null)
             {
-                additionalParams.Add("laverage", _krakenConfig.PairVariables[KrakenConfig.LongLaverage].ToString());
+                additionalParams.Add("leverage", _krakenConfig.PairVariables[KrakenConfig.LongLaverage].ToString());
             }
 
             return await AddOrder(OrderType.sell, price.HasValue ? "limit" : "market", volume, pair, price, operationId, additionalParams);
@@ -336,7 +336,7 @@ namespace bot.kraken
                 Price = x.Price,
                 Pair = x.Pair,
                 OrderType = x.OrderType,
-                IsBorrowed = x.Leverage == _krakenConfig.PairVariables["short laverage"].ToString()
+                IsBorrowed = x.Leverage.StartsWith(_krakenConfig.PairVariables["short laverage"].ToString())
             }).ToList();
         }
 
@@ -388,7 +388,7 @@ namespace bot.kraken
                 {"ml", TradeBalanceType.MarginLevel }
             };
 
-            var tradebalance = await _repository.CallPrivate<Dictionary<string, decimal>>("TradeBalance");
+            var tradebalance = await _repository.CallPrivate<Dictionary<string, decimal>>("TradeBalance", new Dictionary<string, string>(){{ "asset", asset}});
             return tradebalance.Where(x => dict.ContainsKey(x.Key)).ToDictionary(x => dict[x.Key], x => x.Value);
         }
 

@@ -2,6 +2,6 @@
 {
     public enum TradeStatus
     {
-        Sell, Buy, Unknown
+        Sell, Buy, Unknown, Return, Borrow
     }
 }

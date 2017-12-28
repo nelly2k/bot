@@ -87,20 +87,18 @@ namespace bot.core
                 {FileSessionNames.PriceBuy,string.Empty },
                 {FileSessionNames.Volume,string.Empty },
 
-                {FileSessionNames.MACD_Fast_Analysis,string.Empty },
                 {FileSessionNames.MACD_Fast_Value,string.Empty },
                 {FileSessionNames.MACD_Fast_Signal,string.Empty },
                 {FileSessionNames.MACD_Fast_Minutes,string.Empty },
                 {FileSessionNames.MACD_Fast_Decision,string.Empty },
 
-                {FileSessionNames.RSI_Analysis,string.Empty },
                 {FileSessionNames.RSI_Peak,string.Empty },
                 {FileSessionNames.RSI_Analysis_Minutes,string.Empty },
                 {FileSessionNames.RSI_Decision,string.Empty },
 
-                {FileSessionNames.MACD_Slow_Analysis,string.Empty },
                 {FileSessionNames.MACD_Slow_Analysis_Value,string.Empty },
                 {FileSessionNames.MACD_Slow_Analysis_Signal,string.Empty },
+                {FileSessionNames.MACD_Slow_Analysis,string.Empty },
 
                 { FileSessionNames.Analysis,string.Empty },
                 { FileSessionNames.Buy_Volume,string.Empty },
@@ -108,13 +106,14 @@ namespace bot.core
                 { FileSessionNames.Borrow_Volume,string.Empty },
                 { FileSessionNames.Return_Volume,string.Empty },
                 { FileSessionNames.Not_Sold_Volume,string.Empty },
-                { FileSessionNames.CoinBalance,string.Empty },
-                { FileSessionNames.UsdBalance,string.Empty }
+                { FileSessionNames.Profit,string.Empty },
+                { FileSessionNames.UsdBalance,string.Empty },
+                
             });
 
             if (!IsStreamFileExists(streamName, "csv", file))
             {
-                Write(streamName, _config[pair] + Environment.NewLine, false, "csv", file);
+            //    Write(streamName, _config[pair] + Environment.NewLine, false, "csv", file);
                 Write(streamName, string.Join(",", sessionDetails[pair].Keys), false, "csv", file);
             }
 
@@ -122,12 +121,14 @@ namespace bot.core
 
         public void GatherDetails(string pair, string name, double value)
         {
-            GatherDetails(pair, name, Math.Round(value, 3).ToString());
+            double.TryParse(sessionDetails[pair][name], out var newdata);
+            GatherDetails(pair, name, Math.Round(newdata + value, 2).ToString());
         }
 
         public void GatherDetails(string pair, string name, decimal value)
         {
-            GatherDetails(pair, name, Math.Round(value, 3).ToString());
+            decimal.TryParse(sessionDetails[pair][name], out var newdata);
+            GatherDetails(pair, name, Math.Round(newdata + value, 2).ToString());
         }
 
         public void GatherDetails(string pair, string name, string value)
@@ -148,31 +149,34 @@ namespace bot.core
     public class FileSessionNames
     {
         public static string Date => "Date";
-        public static string PriceSell => "PriceSell";
-        public static string PriceBuy => "PriceBuy";
-        public static string Volume => "Volume";
-        public static string MACD_Fast_Analysis => "MACD F Analysis";
-        public static string MACD_Fast_Minutes => "MACD F Minutes";
-        public static string MACD_Fast_Value => "MACD F Value";
-        public static string MACD_Fast_Signal => "MACD F Signal";
-        public static string MACD_Fast_Decision => "MACD F Decision";
-
-        public static string RSI_Analysis_Minutes => "RSI Minutes";
-        public static string RSI_Peak => "RSI Peak";
-        public static string RSI_Analysis => "RSI";
-        public static string RSI_Decision => "RSI Decision";
-
-        public static string MACD_Slow_Analysis => "MACD S Analysis";
-        public static string MACD_Slow_Analysis_Value => "MACD S Value";
-        public static string MACD_Slow_Analysis_Signal => "MACD S Signal";
-        public static string Analysis => "Analysis";
-        public static string Buy_Volume => "Buy Volume";
-        public static string Sell_Volume => "Sell Volume";
-        public static string Borrow_Volume => "Borrow Volume";
-        public static string Return_Volume =>"Return Volume";
-        public static string Not_Sold_Volume => "Not Sold Volume";
-        public static string CoinBalance => "Coin Balance";
-        public static string UsdBalance => "Usd Balance";
         public static string Status => "Status";
+
+        public static string PriceSell => "Price Sell";
+        public static string PriceBuy => "Price Buy";
+        public static string Volume => "Volume";
+
+        public static string MACD_Fast_Value => "MACDF Value";
+        public static string MACD_Fast_Signal => "MACDF Signal";
+        public static string MACD_Fast_Minutes => "MACDF Since";
+        public static string MACD_Fast_Decision => "MACDF";
+
+        public static string RSI_Peak => "RSI Peak";
+        public static string RSI_Analysis_Minutes => "RSI Time";
+        public static string RSI_Decision => "RSI";
+
+        public static string MACD_Slow_Analysis_Value => "MACDS Value";
+        public static string MACD_Slow_Analysis_Signal => "MACDS Signal";
+        public static string MACD_Slow_Analysis => "MACDS";
+
+        public static string Analysis => "Analysis";
+        public static string Buy_Volume => "Buy";
+        public static string Sell_Volume => "Sell";
+        public static string Borrow_Volume => "Borrow";
+        public static string Return_Volume =>"Return";
+        public static string Not_Sold_Volume => "Not Sold";
+        public static string Profit => "Profit";
+        public static string UsdBalance => "Usd Balance";
+        
+        
     }
 }

@@ -79,5 +79,6 @@ create table openOrder(
 create table operation(
 	id int not null primary key identity,
 	platform  nvarchar(50),
-	isDeleted bit constraint dg_operation_isDelted default (0)
+	isDeleted bit constraint dg_operation_isDelted default (0),
+	operationDate DATETIME NOT NULL DEFAULT GETDATE()
 )

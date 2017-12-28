@@ -47,7 +47,7 @@ namespace bot.core
             var result = new List<OperationItem>();
             await Execute(async cmd =>
             {
-                cmd.CommandText = @"select id, pair, misc from operation where platform = @platform and title = @title and isDeleted = 0";
+                cmd.CommandText = @"select id, pair, misc, operationDate from operation where platform = @platform and title = @title and isDeleted = 0";
                 cmd.Parameters.AddWithValue("@platform", platform);
                 cmd.Parameters.AddWithValue("@title", title);
                 var reader = await cmd.ExecuteReaderAsync();
@@ -59,6 +59,7 @@ namespace bot.core
                         Id= reader.GetInt32(0),
                         Pair = reader.GetString(1),
                         Misc = reader.GetString(2),
+                        OperationDate = reader.GetDateTime(3)
                     });
                 }
             });
@@ -73,6 +74,7 @@ namespace bot.core
         public int Id { get; set; }
         public string Pair { get; set; }
         public string Misc { get; set; }
+        public DateTime OperationDate { get; set; }
         
     }
 }

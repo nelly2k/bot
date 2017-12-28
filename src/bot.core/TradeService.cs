@@ -97,9 +97,17 @@ namespace bot.core
             {
                 return;
             }
-
+            
             switch (newStatus)
             {
+                case TradeStatus.Return:
+                    await Return(client, pair, groupedTrades);
+                    await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Return, pair);
+                    break;
+                case TradeStatus.Borrow:
+                    await Borrow(client, pair, groupedTrades);
+                    await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Borrow, pair);
+                    break;
                 case TradeStatus.Buy:
                     await Buy(client, pair, groupedTrades);
                     await Return(client, pair, groupedTrades);
@@ -155,12 +163,11 @@ namespace bot.core
             var macd = groupedTrades.Macd(_config[pair].MacdSlow, _config[pair].MacdFast, _config[pair].MacdSignal);
             var macdAnalysis = macd.MacdAnalysis();
 
-            _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Analysis, macdAnalysis.CrossType.ToString());
             _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Value, macdAnalysis.Trade.Price);
-            var macdTrade = macdAnalysis.Trade as BaseTrade;
-            if (macdTrade != null)
+
+            if (macdAnalysis.Trade is BaseTrade macdTrade)
             {
-                _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Signal, macdAnalysis.Trade.Price);
+                _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Signal, macdTrade.Volume);
             }
 
             _fileService.GatherDetails(pair, FileSessionNames.MACD_Fast_Minutes, (_dateTime.Now - macdAnalysis.Trade.DateTime).TotalMinutes);
@@ -172,16 +179,11 @@ namespace bot.core
                 .FirstOrDefault();
             if (rsiLastPeak != null)
             {
-                _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis, rsiLastPeak.PeakType.ToString());
                 _fileService.GatherDetails(pair, FileSessionNames.RSI_Peak, rsiLastPeak.PeakTrade.Price);
                 _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis_Minutes, (_dateTime.Now - rsiLastPeak.ExitTrade.DateTime).TotalMinutes);
                 _fileService.GatherDetails(pair, FileSessionNames.RSI_Decision, rsiLastPeak.PeakType == PeakType.High ? "sell" : "buy");
             }
-            else
-            {
-                _fileService.GatherDetails(pair, FileSessionNames.RSI_Analysis, "No Peaks Found");
-            }
-
+          
             var macdSlow = groupedTradesSlow.Macd(_config[pair].MacdSlow, _config[pair].MacdFast, _config[pair].MacdSignal).ToList();
 
             var macdSlowAnalysis = macdSlow.MacdSlowAnalysis();
@@ -196,6 +198,5 @@ namespace bot.core
             _fileService.GatherDetails(pair, FileSessionNames.Analysis, status.ToString());
             return status;
         }
-
     }
 }

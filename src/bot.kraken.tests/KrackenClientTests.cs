@@ -149,7 +149,11 @@ namespace bot.kraken.test
         [Test]
         public async Task GetOrder()
         {
-            var result = await cr.GetOrders("ON3ZLP-TJK5D-B7UN23", "OWFXTE-VNVDA-6LLX6X");
+            var configRepo = new ConfigRepository(new List<IExchangeConfig>().ToArray());
+            var config = await configRepo.Get();
+            var repo = new KrakenRepository(config);
+            var service = new KrakenClientService(config, repo, new KrakenConfig());
+            var result = await service.GetOrders("OHG6X5-JVBOR-JTW7YA");
 
             Assert.That(result, Is.Not.Null);
         }

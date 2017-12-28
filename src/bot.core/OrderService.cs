@@ -64,6 +64,10 @@ namespace bot.core
                 var orderIds = await client.GetOrdersIds(operation.Id);
                 if (!orderIds.Any())
                 {
+                    if ((_dateTime.Now - operation.OperationDate).TotalMinutes > 20)
+                    {
+                        await _operationRepository.Complete(operation.Id);
+                    }
                     continue;
                 }
 
@@ -73,10 +77,10 @@ namespace bot.core
                 }
 
                 await _operationRepository.Complete(operation.Id);
-                if (operation.Misc == "sell")
+                if (operation.Misc == "sell" || operation.Misc == "borrow")
                 {
                     await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Sell, operation.Pair);
-                }else if (operation.Misc == "buy")
+                }else if (operation.Misc == "buy" || operation.Misc == "return")
                 {
                     await _statusService.SetCurrentStatus(client.Platform, TradeStatus.Buy, operation.Pair);
                 }
@@ -122,17 +126,21 @@ namespace bot.core
 
                     }
                 }
-                else
-                {
+              
                     await _orderRepository.Remove(client.Platform, order.Id);
-                }
+              
             }
         }
 
         public async Task Borrow(IExchangeClient client, string pair, decimal price)
         {
+            var balanceItems = (await _balanceRepository.Get(client.Platform, pair)).Where(x => x.IsBorrowed);
+            if (balanceItems.Any())
+            {
+                return;
+            }
             var availableVolume = Math.Round(await client.GetAvailableMargin(pair.Substring(0, 3)),_config[pair].VolumeFormat);
-            availableVolume = availableVolume / 100m * (decimal)_config[pair].Share;
+            //availableVolume = availableVolume / 100m * (decimal)_config[pair].Share;
             if (availableVolume < _config[pair].MinVolume)
             {
                 //Insufficient funds
@@ -159,27 +167,28 @@ namespace bot.core
             var balanceItems = (await _balanceRepository.Get(client.Platform, pair)).Where(x => x.IsBorrowed);
             var isNotReturned = false;
             var volume = decimal.Zero;
-
+            var profit = decimal.Zero;
             foreach (var balanceItem in balanceItems)
             {
                 var borrowedPrice = balanceItem.Volume * balanceItem.Price
-                                  + _moneyService.FeeToPay(pair, balanceItem.Volume, balanceItem.Price, 0.26m)
-                                  + _moneyService.FeeToPay(pair, balanceItem.Volume, price, 0.26m);
+                                  - _moneyService.FeeToPay(pair, balanceItem.Volume, balanceItem.Price, 0.26m)
+                                  - _moneyService.FeeToPay(pair, balanceItem.Volume, price, 0.26m);
                 var returnPrice = balanceItem.Volume * price;
-                if (borrowedPrice < returnPrice || balanceItem.NotSold >= _config[pair].MaxMissedSells)
+                if (borrowedPrice > returnPrice || balanceItem.NotSold >= _config[pair].MaxMissedSells)
                 {
                     volume += balanceItem.Volume;
+                    profit += borrowedPrice - returnPrice;
                 }
                 else
                 {
-                    if (balanceItem.NotSoldtDate > _dateTime.Now.AddMinutes(-_config[pair].ThresholdMinutes))
+                    if (balanceItem.NotSoldtDate > _dateTime.Now.AddMinutes(-_config[pair].ThresholdMinutes * balanceItem.NotSold + 1))
                     {
                         //_fileService.Write(pair, $"Not worths to sell, and too short.");
                     }
                     else
                     {
                         _fileService.GatherDetails(pair, FileSessionNames.Not_Sold_Volume, balanceItem.Volume);
-                        await _notSoldRepository.SetNotSold(client.Platform, pair);
+                        await _notSoldRepository.SetNotSold(client.Platform, pair, true);
                     }
 
                     isNotReturned = true;
@@ -191,8 +200,10 @@ namespace bot.core
                 return !isNotReturned;
             }
             _fileService.GatherDetails(pair, FileSessionNames.Return_Volume, volume);
-            var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "return");
+            _fileService.GatherDetails(pair, FileSessionNames.Profit, profit);
 
+            var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "return");
+            
             var orderIds = await client.Buy(volume, pair, _config[pair].IsMarket ? (decimal?)null : price, operationId, true);
             if (orderIds == null || !orderIds.Any())
             {
@@ -237,6 +248,7 @@ namespace bot.core
             var balanceItems = (await _balanceRepository.Get(client.Platform, pair)).Where(x=>!x.IsBorrowed);
             var isNotSold = false;
             var volume = decimal.Zero;
+            var profit = decimal.Zero;
             foreach (var balanceItem in balanceItems)
             {
                 var boughtPrice = balanceItem.Volume * balanceItem.Price
@@ -247,6 +259,7 @@ namespace bot.core
                 if (boughtPrice < sellPrice || balanceItem.NotSold >= _config[pair].MaxMissedSells)
                 {
                     volume += balanceItem.Volume;
+                    profit += sellPrice - boughtPrice;
                 }
                 else
                 {
@@ -257,7 +270,7 @@ namespace bot.core
                     else
                     {
                         _fileService.GatherDetails(pair, FileSessionNames.Not_Sold_Volume, balanceItem.Volume);
-                        await _notSoldRepository.SetNotSold(client.Platform, pair);
+                        await _notSoldRepository.SetNotSold(client.Platform, pair, false);
                     }
 
                     isNotSold = true;
@@ -269,6 +282,7 @@ namespace bot.core
                 return !isNotSold;
             }
             _fileService.GatherDetails(pair, FileSessionNames.Sell_Volume, volume);
+            _fileService.GatherDetails(pair, FileSessionNames.Profit, profit);
             var operationId = await _operationRepository.Add(client.Platform, "add order", pair, "sell");
 
             var orderIds = await client.Sell(volume, pair, _config[pair].IsMarket ? (decimal?)null : price, operationId);

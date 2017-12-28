@@ -18,7 +18,7 @@ namespace bot.core.tests
             var get = await balanceRepository.Get(platform, pair);
             Assert.That(get.Count, Is.EqualTo(1));
 
-            await notSoldRepository.SetNotSold(platform, pair);
+            await notSoldRepository.SetNotSold(platform, pair, false);
 
             var one = (await balanceRepository.Get(platform, pair)).First();
             Assert.That(one.NotSoldtDate,Is.Not.Null);
@@ -26,7 +26,7 @@ namespace bot.core.tests
 
             Assert.That(one.Volume, Is.EqualTo(0.25m).Within(0.01));
             
-            await notSoldRepository.SetNotSold(platform, pair);
+            await notSoldRepository.SetNotSold(platform, pair, false);
             one = (await balanceRepository.Get(platform, pair)).First();
             Assert.That(one.NotSold, Is.EqualTo(2));
 

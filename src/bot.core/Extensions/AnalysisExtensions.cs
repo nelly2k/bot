@@ -23,13 +23,15 @@ namespace bot.core.Extensions
                 return TradeStatus.Unknown;
             }
 
-            if (macdAnalysisResult.CrossType == CrossType.MacdRises && lastRsiPeak.PeakType == PeakType.Low && macdSlow == TradeStatus.Buy)
+            if (macdAnalysisResult.CrossType == CrossType.MacdRises && lastRsiPeak.PeakType == PeakType.Low)
             {
+               // return macdSlow == TradeStatus.Buy ? TradeStatus.Buy : TradeStatus.Return;
                 return TradeStatus.Buy;
             }
 
             if (macdAnalysisResult.CrossType == CrossType.MacdFalls && lastRsiPeak.PeakType == PeakType.High)
             {
+                //return macdSlow == TradeStatus.Sell ? TradeStatus.Sell : TradeStatus.Borrow;
                 return TradeStatus.Sell;
             }
 
