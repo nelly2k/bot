@@ -1,0 +1,11 @@
+
+ @ECHO OFF
+ mode 120,10
+ prompt $g
+ color A
+ 
+ taskkill /pid lync /f
+ 
+ set /P Usern=Enter Username: 
+ 
+ runas /user:%usern%@uhg.com.au "C:\Program Files (x86)\Microsoft Office\root\Office16\lync"
